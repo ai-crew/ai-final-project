@@ -18,11 +18,11 @@ python app.py
 black app.py
 ```
 
-* Adding new dependencies:
+* Saving new dependencies:
 ```
 pipreqs --force
 ```
-(if that doesn't work try the following)
+Note: if pipreqs doesn't work try the following:
 ```
 pip freeze > requirements.txt
 ```
