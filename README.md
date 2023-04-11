@@ -20,7 +20,7 @@ black app.py
 
 * Saving new dependencies:
 ```
-pip install pipreqs # if not installed
+pip install pipreqs   #if not already installed
 pipreqs --force
 ```
 Note: if pipreqs doesn't work try the following:
