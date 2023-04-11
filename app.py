@@ -7,51 +7,51 @@ import dash_bootstrap_components as dbc
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-app.layout = html.Div(
-    [
-        html.Center([html.H1("Linear Regression Tool")], style={"marginTop": 20}),
-        html.Hr(),
-        html.Br(),
+
+graph_tab = dbc.Card(
+    dbc.CardBody(
         html.Div(
             [
-                html.H2("What is this tool?", style={"marginLeft": 20}),
-                html.P(
-                    "A tool for visualizing linear regression.",
-                    style={"fontSize": 15, "marginLeft": 40},
-                ),
-            ]
-        ),
-        html.Div(
-            [
-                html.H2("How to use?", style={"marginLeft": 20}),
-                html.P(
-                    "Start either by uploading a .csv file, or interacting with the graph!",
-                    style={"fontSize": 15, "marginLeft": 40},
-                ),
                 html.Ul(
                     [
                         html.Li(
-                            "Make sure that the table has appropriate column headers that can be extracted as features",
-                            style={"marginLeft": 60},
-                        ),
-                        html.Li(
-                            [
-                                "Try and make sure that there is no missing data in the table, click ",
-                                html.A(
-                                    "here",
-                                    href="https://www.analyticsvidhya.com/blog/2021/05/dealing-with-missing-values-in-python-a-complete-guide/",
-                                    target="_blank",
-                                ),
-                                " for more information",
-                            ],
-                            style={"marginLeft": 60},
+                            "You can add data by clicking on the graph, and adjust the parameters!"
                         ),
                     ],
                     style={"fontSize": 15},
                 ),
             ]
-        ),
-        html.Center(
+        )
+    ),
+    className="mt-3",
+)
+
+file_tab = dbc.Card(
+    dbc.CardBody(
+        [
+            html.Div(
+                [
+                    html.Ul(
+                        [
+                            html.Li(
+                                "Make sure that the table has appropriate column headers that can be extracted as features"
+                            ),
+                            html.Li(
+                                [
+                                    "Try and make sure that there is no missing data in the table, click ",
+                                    html.A(
+                                        "here",
+                                        href="https://www.analyticsvidhya.com/blog/2021/05/dealing-with-missing-values-in-python-a-complete-guide/",
+                                        target="_blank",
+                                    ),
+                                    " for more information",
+                                ],
+                            ),
+                        ],
+                        style={"fontSize": 15},
+                    ),
+                ]
+            ),
             html.Div(
                 [
                     dcc.Upload(
@@ -74,7 +74,51 @@ app.layout = html.Div(
                     ),
                     html.Div(id="output-data-upload"),
                 ]
-            )
+            ),
+        ]
+    ),
+    className="mt-3",
+)
+
+
+app.layout = html.Div(
+    [
+        html.Center([html.H1("Linear Regression Tool")], style={"marginTop": 20}),
+        html.Hr(),
+        html.Br(),
+        html.Div(
+            [
+                html.H2("What is this tool?", style={"marginLeft": 20}),
+                html.P(
+                    "A tool for visualizing linear regression",
+                    style={"fontSize": 15, "marginLeft": 40},
+                ),
+            ]
+        ),
+        html.Div(
+            [
+                html.H2("How to use?", style={"marginLeft": 20}),
+                html.P(
+                    "Start by interacting with the graph, or uploading a file",
+                    style={"fontSize": 15, "marginLeft": 40},
+                ),
+                html.Br(),
+                html.Center(
+                    dbc.Tabs(
+                        [
+                            dbc.Tab(label="Graph", tab_id="tab-1"),
+                            dbc.Tab(label="File", tab_id="tab-2"),
+                        ],
+                        id="tabs",
+                        active_tab="tab-1",
+                        style={"width": "95%"},
+                    ),
+                ),
+                html.Br(),
+                html.Center(
+                    html.Div(id="tab-content", style={"width": "95%"}),
+                ),
+            ]
         ),
         html.Hr(),
         html.Div(
@@ -105,6 +149,15 @@ def parse_contents(contents, filename):
         df = pd.read_excel(io.BytesIO(decoded))
 
     return df
+
+
+@app.callback(Output("tab-content", "children"), [Input("tabs", "active_tab")])
+def switch_tab(at):
+    if at == "tab-1":
+        return graph_tab
+    elif at == "tab-2":
+        return file_tab
+    return html.P("Error rendering tabs...")
 
 
 @app.callback(
