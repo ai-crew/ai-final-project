@@ -1,4 +1,4 @@
-# Notes for Devs
+# Notes 
 
 ### Getting Started
 * Installing dependencies:
