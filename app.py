@@ -19,10 +19,16 @@ graph_tab = dbc.Card(
         [
             html.Div(
                 html.Center(
-                    html.P(
-                        "You can add data by clicking on the graph and adjust the parameters",
-                        style={"frontSize": "15"},
-                    )
+                    [
+                        html.P(
+                            "Start by creating a graph with the appropriate labels",
+                            style={"frontSize": "15"},
+                        ),
+                        html.P(
+                            "You can then start inputting points by entering x and y coordinates",
+                            style={"frontSize": "15"},
+                        ),
+                    ]
                 ),
             ),
             dbc.Row(
@@ -49,29 +55,63 @@ graph_tab = dbc.Card(
                                 color="primary",
                                 className="mb-3",
                             ),
-                            html.Div(
+                        ],
+                        width="auto",
+                    ),
+                    dbc.Col(
+                        [
+                            dbc.InputGroup(
                                 [
-                                    dbc.Toast(
-                                        "Please fill in the input boxes",
-                                        id="input-error-toast",
-                                        header="Missing Input",
-                                        is_open=False,
-                                        dismissable=True,
-                                        icon="danger",
-                                        duration=4000,
-                                    )
+                                    dbc.InputGroupText("X Value"),
+                                    dbc.Input(id="x-input", type="number"),
                                 ],
-                                style={
-                                    "position": "fixed",
-                                    "top": "2rem",
-                                    "right": "2rem",
-                                },
+                                className="mb-3",
+                            ),
+                            dbc.InputGroup(
+                                [
+                                    dbc.InputGroupText("Y Value"),
+                                    dbc.Input(id="y-input", type="number"),
+                                ],
+                                className="mb-3",
+                            ),
+                            dbc.Button(
+                                "Add Point",
+                                id="add-point",
+                                color="primary",
+                                className="mb-3",
                             ),
                         ],
                         width="auto",
-                        className="mx-auto",
-                    )
-                ]
+                    ),
+                ],
+                justify="center",
+            ),
+            html.Div(
+                [
+                    dbc.Toast(
+                        "Please fill in the input boxes",
+                        id="input-error-toast",
+                        header="Missing Input",
+                        is_open=False,
+                        dismissable=True,
+                        icon="danger",
+                        duration=4000,
+                    ),
+                    dbc.Toast(
+                        "Input x and y coordinates to add points",
+                        id="coordinates-error-toast",
+                        header="Missing Coordinates",
+                        is_open=False,
+                        dismissable=True,
+                        icon="danger",
+                        duration=4000,
+                    ),
+                ],
+                style={
+                    "position": "fixed",
+                    "top": "2rem",
+                    "right": "2rem",
+                },
             ),
             dcc.Graph(id="regression-graph", style={"display": "none"}),
             html.Div(id="graph-visible", style={"display": "none"}, children="False"),
@@ -216,6 +256,29 @@ def switch_tab(at):
 
 
 @app.callback(
+    Output("coordinates-error-toast", "is_open"),
+    [Input("add-point", "n_clicks")],
+    [State("x-input", "value"), State("y-input", "value")],
+)
+def show_coordinates_error(n_clicks, x_value, y_value):
+    if n_clicks and (x_value is None or y_value is None):
+        return True
+    return False
+
+
+@app.callback(
+    Output("clicked-coordinates", "children"),
+    Input("regression-graph", "clickData"),
+)
+def display_click_data(click_data):
+    if click_data:
+        x = click_data["points"][0]["x"]
+        y = click_data["points"][0]["y"]
+        return f"Clicked coordinates: x={x}, y={y}"
+    return "No coordinates clicked yet."
+
+
+@app.callback(
     [
         Output("regression-graph", "figure"),
         Output("input-error-toast", "is_open"),
@@ -224,73 +287,72 @@ def switch_tab(at):
     ],
     [
         Input("create-graph", "n_clicks"),
-        Input("regression-graph", "clickData"),
+        Input("add-point", "n_clicks"),
     ],
     [
         State("feature-input", "value"),
         State("predicted-input", "value"),
+        State("x-input", "value"),
+        State("y-input", "value"),
         State("regression-graph", "figure"),
     ],
 )
-def update_graph(n_clicks, click_data, feature_value, predicted_value, figure):
+def update_graph(
+    n_clicks_create, n_clicks_add, feature_value, predicted_value, x, y, figure
+):
     ctx = dash.callback_context
-    if (
-        not ctx.triggered
-        or ctx.triggered[0]["prop_id"].split(".")[0] == "regression-graph"
-    ):
+    if not ctx.triggered:
         raise PreventUpdate
 
     if feature_value is None or predicted_value is None:
         return no_update, True, no_update, no_update
 
     if (
-        n_clicks is not None
+        n_clicks_create is not None
         and feature_value is not None
         and predicted_value is not None
     ):
         graph_visible = True
 
-    if click_data is None and graph_visible is False:
+    if graph_visible is False:
         return no_update, no_update, no_update, {"display": "none"}
 
-    if click_data is None:
-        return (
-            go.Figure(
-                layout=go.Layout(
-                    xaxis_title=feature_value,
-                    yaxis_title=predicted_value,
-                    hovermode="closest",
-                    clickmode="event+select",
-                )
-            ),
-            False,
-            True,
-            {"display": "block"},
-        )
-
-    if figure is None or figure["data"] == []:
-        raise PreventUpdate
-
-    x = click_data["points"][0]["x"]
-    y = click_data["points"][0]["y"]
-
     if figure is None:
-        figure = go.Figure()
+        figure = go.Figure(
+            data=[
+                go.Scatter(
+                    x=[0],
+                    y=[0],
+                    mode="markers",
+                    marker=dict(size=0, opacity=0),
+                    showlegend=False,
+                )
+            ],
+            layout=go.Layout(
+                xaxis_title=feature_value,
+                yaxis_title=predicted_value,
+                hovermode="closest",
+                clickmode="event+select",
+            ),
+        )
 
     if (
-        ctx.triggered[0]["prop_id"] == "regression-graph.clickData"
-    ):  # Add this condition
-        new_trace = go.Scatter(
-            x=[x],
-            y=[y],
-            mode="markers",
-            marker=dict(color="red", symbol="x", size=10),
-            name=f"({x:.2f}, {y:2f})",
-        )
+        ctx.triggered[0]["prop_id"] == "add-point.n_clicks"
+        and x is not None
+        and y is not None
+    ):
+        new_trace = {
+            "x": [x],
+            "y": [y],
+            "mode": "markers",
+            "marker": {"color": "red", "symbol": "x", "size": 10},
+            "name": f"({x:.2f}, {y:2f})",
+            "type": "scatter",
+        }
 
-        figure.add_trace(new_trace)
+        figure["data"].append(new_trace)
 
-    figure.update_layout(
+    figure["layout"].update(
         xaxis_title=feature_value,
         yaxis_title=predicted_value,
         hovermode="closest",
