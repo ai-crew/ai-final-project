@@ -14,6 +14,8 @@ app = Dash(
     suppress_callback_exceptions=True,
 )
 
+server = app.server
+
 graph_tab = dbc.Card(
     dbc.CardBody(
         [
@@ -419,4 +421,4 @@ def update_output(contents, filename):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
