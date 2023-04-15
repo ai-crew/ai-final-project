@@ -1,8 +1,6 @@
-# Notes 
+You can find the deployed app [here](https://linear-regression-viz.herokuapp.com/)
 
-// NOT DEPLOYED YET TO ANYWHERE, INTENDED AS A STARTING POINT
-
-### Getting Started
+### Getting Started for Devs
 * Installing dependencies:
 ```
 pip install -r requirements.txt
@@ -22,5 +20,8 @@ black app.py
 ```
 pipreqs --force
 ```
-Note: pipreqs only saves project dependencies.
+Notes: 
+* pipreqs only saves project dependencies,  
+* packages such as the "black" code formatter need to be separately installed.
 
+### How to Use?

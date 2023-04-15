@@ -22,11 +22,11 @@ graph_tab = dbc.Card(
                     [
                         html.P(
                             "Start by creating a graph with the appropriate labels",
-                            style={"frontSize": "15"},
+                            style={"frontSize": 15},
                         ),
                         html.P(
                             "You can then start inputting points by entering x and y coordinates",
-                            style={"frontSize": "15"},
+                            style={"frontSize": 15},
                         ),
                     ]
                 ),
@@ -374,6 +374,8 @@ def update_output(contents, filename):
 
         try:
             df = parse_contents(contents, filename)
+            df.columns = df.columns.str.replace(r"[ ()]", "_")
+
             return (
                 html.Div(
                     [
@@ -383,23 +385,23 @@ def update_output(contents, filename):
                         ),
                         html.Div(
                             [
-                                dash_table.DataTable(
-                                    id="table",
-                                    columns=[{"name": i, "id": i} for i in df.columns],
-                                    data=df.to_dict("records"),
-                                    style_cell={"textAlign": "left"},
-                                    style_header={
-                                        "backgroundColor": "rgb(230, 230, 230)",
-                                        "fontWeight": "bold",
-                                    },
-                                    style_data={
-                                        "whiteSpace": "normal",
-                                        "height": "auto",
-                                    },
+                                dcc.Loading(
+                                    children=dash_table.DataTable(
+                                        data=df.to_dict("records"),
+                                        columns=[{"name": i, "id": i} for i in df.columns],
+                                        style_cell={"textAlign": "left"},
+                                        style_header={
+                                            "backgroundColor": "rgb(230, 230, 230)",
+                                            "fontWeight": "bold",
+                                        },
+                                        style_data={
+                                            "whiteSpace": "normal",
+                                            "height": "auto",
+                                        },
+                                    )
                                 )
                             ],
                             style={
-                                "overflowX": "auto",
                                 "marginLeft": "5%",
                                 "marginRight": "5%",
                             },
