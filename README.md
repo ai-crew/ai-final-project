@@ -24,3 +24,4 @@ pipreqs --force
 ```
 Note: pipreqs only saves project dependencies.
 
+Link to site: https://linear-regression-viz.herokuapp.com/
