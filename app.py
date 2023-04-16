@@ -185,16 +185,17 @@ app.layout = html.Div(
             [
                 html.H2("What is this tool?", style={"marginLeft": 20}),
                 html.P(
-                    "A tool for visualizing linear regression",
+                    "This is a tool for visualizing linear regression, and getting a better understanding of linear regression through playing with parameters.",
                     style={"fontSize": 15, "marginLeft": 40},
                 ),
-            ]
+            ],
+            style={"marginRight": 20, "marginLeft": 20},
         ),
         html.Div(
             [
                 html.H2("How to use?", style={"marginLeft": 20}),
                 html.P(
-                    "Start by interacting with the graph, or uploading a file",
+                    "You can create a graph and adjust the values as you see fit, or simply upload an Excel file with your data.",
                     style={"fontSize": 15, "marginLeft": 40},
                 ),
                 html.Br(),
@@ -213,13 +214,14 @@ app.layout = html.Div(
                 html.Center(
                     html.Div(id="tab-content", style={"width": "95%"}),
                 ),
-            ]
+            ],
+            style={"marginRight": 20, "marginLeft": 20},
         ),
         html.Hr(),
         html.Div(
             [
                 dbc.Toast(
-                    "Please upload a .csv or .xlsx file",
+                    "Please upload a .xlsx file",
                     id="error-toast",
                     header="Invalid File Type",
                     is_open=False,
@@ -230,6 +232,7 @@ app.layout = html.Div(
             ],
             style={"position": "fixed", "top": "2rem", "right": "2rem"},
         ),
+        dcc.Store(id="active-tab-store", data="tab-1"),
     ],
 )
 
@@ -238,9 +241,7 @@ def parse_contents(contents, filename):
     content_type, content_string = contents.split(",")
     decoded = base64.b64decode(content_string)
 
-    if "csv" in filename:
-        df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
-    elif "xlsx" in filename:
+    if "xlsx" in filename:
         df = pd.read_excel(io.BytesIO(decoded))
 
     return df
@@ -369,7 +370,7 @@ def update_graph(
 )
 def update_output(contents, filename):
     if contents:
-        if not (filename.endswith(".csv") or filename.endswith(".xlsx")):
+        if not filename.endswith(".xlsx"):
             return no_update, True
 
         try:
@@ -388,7 +389,9 @@ def update_output(contents, filename):
                                 dcc.Loading(
                                     children=dash_table.DataTable(
                                         data=df.to_dict("records"),
-                                        columns=[{"name": i, "id": i} for i in df.columns],
+                                        columns=[
+                                            {"name": i, "id": i} for i in df.columns
+                                        ],
                                         style_cell={"textAlign": "left"},
                                         style_header={
                                             "backgroundColor": "rgb(230, 230, 230)",
