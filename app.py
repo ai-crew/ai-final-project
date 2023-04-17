@@ -1,12 +1,13 @@
-import base64
 import io
+import dash
+import base64
 import pandas as pd
 import plotly.graph_objects as go
-import dash
-from dash import Dash, html, dcc, dash_table, no_update
-from dash.dependencies import Input, Output, State
-from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
+from dash.exceptions import PreventUpdate
+from dash.dependencies import Input, Output, State
+from dash import Dash, html, dcc, dash_table, no_update
+
 
 app = Dash(
     __name__,
@@ -24,11 +25,11 @@ graph_tab = dbc.Card(
                     [
                         html.P(
                             "Start by creating a graph with the appropriate labels",
-                            style={"frontSize": 15},
+                            style={"fontSize": 15},
                         ),
                         html.P(
                             "You can then start inputting points by entering x and y coordinates",
-                            style={"frontSize": 15},
+                            style={"fontSize": 15},
                         ),
                     ]
                 ),
@@ -85,6 +86,42 @@ graph_tab = dbc.Card(
                         ],
                         width="auto",
                     ),
+                    dbc.Col(
+                        [
+                            dbc.InputGroup(
+                                [
+                                    dbc.InputGroupText("Learning Rate"),
+                                    dbc.Input(
+                                        id="learning_rate",
+                                        type="number",
+                                        value=0.002,
+                                        step=0.001,
+                                    ),
+                                ],
+                                className="mb-3",
+                            ),
+                            dbc.InputGroup(
+                                [
+                                    dbc.InputGroupText("Iteration Amount"),
+                                    dbc.Input(
+                                        id="iteration_amount",
+                                        type="number",
+                                        value=100,
+                                        min=1,
+                                        max=1000,
+                                    ),
+                                ],
+                                className="mb-3",
+                            ),
+                            dbc.Button(
+                                "Update Parameters",
+                                id="param_update",
+                                color="primary",
+                                className="mb-3",
+                            ),
+                        ],
+                        width="auto",
+                    ),
                 ],
                 justify="center",
             ),
@@ -117,6 +154,12 @@ graph_tab = dbc.Card(
             ),
             dcc.Graph(id="regression-graph", style={"display": "none"}),
             html.Div(id="graph-visible", style={"display": "none"}, children="False"),
+            dbc.Button(
+                "Start Over",
+                id="restart-button",
+                color="danger",
+                className="mt-3",
+            ),
         ]
     ),
     className="mt-3",
@@ -284,31 +327,77 @@ def display_click_data(click_data):
 @app.callback(
     [
         Output("regression-graph", "figure"),
-        Output("input-error-toast", "is_open"),
-        Output("graph-visible", "children"),
         Output("regression-graph", "style"),
+        Output("feature-input", "value"),
+        Output("predicted-input", "value"),
+        Output("x-input", "value"),
+        Output("y-input", "value"),
+        Output("learning_rate", "value"),
+        Output("iteration_amount", "value"),
+        Output("graph-visible", "children"),
+        Output("input-error-toast", "is_open"),
     ],
     [
         Input("create-graph", "n_clicks"),
         Input("add-point", "n_clicks"),
+        Input("restart-button", "n_clicks"),
     ],
     [
         State("feature-input", "value"),
         State("predicted-input", "value"),
         State("x-input", "value"),
         State("y-input", "value"),
+        State("learning_rate", "value"),
+        State("iteration_amount", "value"),
         State("regression-graph", "figure"),
     ],
 )
 def update_graph(
-    n_clicks_create, n_clicks_add, feature_value, predicted_value, x, y, figure
+    n_clicks_create,
+    n_clicks_add_point,
+    n_clicks_restart,
+    feature_value,
+    predicted_value,
+    x,
+    y,
+    learning_rate,
+    iteration_amount,
+    figure,
 ):
     ctx = dash.callback_context
     if not ctx.triggered:
         raise PreventUpdate
 
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    if triggered_id == "restart-button":
+        empty_figure = go.Figure()  # Create an empty figure
+
+        return (
+            empty_figure,  # Reset figure to the empty figure
+            {"display": "none"},  # Hide the graph
+            "",  # Empty feature-input value
+            "",  # Empty predicted-input value
+            None,  # Empty x-input value
+            None,  # Empty y-input value
+            0.002,  # Reset learning rate to default value
+            100,  # Reset iteration amount to default value
+            "False",  # Set graph-visible to False
+            no_update,  # No update for input-error-toast
+        )
+
     if feature_value is None or predicted_value is None:
-        return no_update, True, no_update, no_update
+        return (
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            True,
+        )
 
     if (
         n_clicks_create is not None
@@ -318,7 +407,18 @@ def update_graph(
         graph_visible = True
 
     if graph_visible is False:
-        return no_update, no_update, no_update, {"display": "none"}
+        return (
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            {"display": "none"},
+        )
 
     if figure is None:
         figure = go.Figure(
@@ -339,11 +439,7 @@ def update_graph(
             ),
         )
 
-    if (
-        ctx.triggered[0]["prop_id"] == "add-point.n_clicks"
-        and x is not None
-        and y is not None
-    ):
+    if triggered_id == "add-point" and x is not None and y is not None:
         new_trace = {
             "x": [x],
             "y": [y],
@@ -361,7 +457,18 @@ def update_graph(
         hovermode="closest",
     )
 
-    return figure, False, True, {"display": "block"}
+    return (
+        figure,
+        {"display": "block" if graph_visible else "none"},
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        no_update,
+        str(graph_visible),
+        no_update,
+    )
 
 
 @app.callback(
@@ -426,4 +533,4 @@ def update_output(contents, filename):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)
