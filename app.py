@@ -7,6 +7,11 @@ from dash import Dash, html, dcc, dash_table, no_update
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
+from linear_regression import linear_func
+from linear_regression import cost_func
+from linear_regression import total_cost
+from linear_regression import gradient
+from linear_regression import gradient_descent
 
 app = Dash(
     __name__,
