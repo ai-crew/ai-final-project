@@ -20,8 +20,8 @@ black app.py
 ```
 pipreqs --force
 ```
-Notes: 
+Notes:
 * pipreqs only saves project dependencies,  
 * packages such as the "black" code formatter need to be separately installed.
 
-### How to Use?
+Link to site: https://linear-regression-viz.herokuapp.com/
