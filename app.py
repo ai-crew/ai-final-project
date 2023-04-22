@@ -157,7 +157,14 @@ graph_tab = dbc.Card(
                     "right": "2rem",
                 },
             ),
-            dcc.Graph(id="regression-graph", style={"display": "none"}),
+            dcc.Graph(
+                id="cost-graph",
+                style={"display": "none"}
+                ),
+            dcc.Graph(
+                id="regression-graph", 
+                style={"display": "none"}
+                ),
             html.Div(id="graph-visible", style={"display": "none"}, children="False"),
             dbc.Button(
                 "Start Over",
@@ -321,6 +328,7 @@ def show_coordinates_error(n_clicks, x_value, y_value):
     Output("clicked-coordinates", "children"),
     Input("regression-graph", "clickData"),
 )
+
 def display_click_data(click_data):
     if click_data:
         x = click_data["points"][0]["x"]
@@ -329,8 +337,14 @@ def display_click_data(click_data):
     return "No coordinates clicked yet."
 
 
+# App variables
+x_vals = []
+y_vals = []
+
 @app.callback(
     [
+        Output("cost-graph", "figure"),
+        Output("cost-graph", "style"),
         Output("regression-graph", "figure"),
         Output("regression-graph", "style"),
         Output("feature-input", "value"),
@@ -355,6 +369,7 @@ def display_click_data(click_data):
         State("learning_rate", "value"),
         State("iteration_amount", "value"),
         State("regression-graph", "figure"),
+        State("cost-graph", "figure"),
     ],
 )
 def update_graph(
@@ -368,6 +383,7 @@ def update_graph(
     learning_rate,
     iteration_amount,
     figure,
+    cost_figure,
 ):
     ctx = dash.callback_context
     if not ctx.triggered:
@@ -378,6 +394,8 @@ def update_graph(
         empty_figure = go.Figure()  # Create an empty figure
 
         return (
+            empty_figure,  # Reset cost_figure to the empty figure
+            {"display": "none"},  # Hide the graph
             empty_figure,  # Reset figure to the empty figure
             {"display": "none"},  # Hide the graph
             "",  # Empty feature-input value
@@ -392,6 +410,8 @@ def update_graph(
 
     if feature_value is None or predicted_value is None:
         return (
+            no_update,
+            no_update,
             no_update,
             no_update,
             no_update,
@@ -422,12 +442,37 @@ def update_graph(
             no_update,
             no_update,
             no_update,
+            no_update,
+            no_update,
             {"display": "none"},
+        )
+    
+    if cost_figure is None: 
+        cost_figure = go.Figure(
+            data=[
+                go.Scatter(
+                    x=list(range(iteration_amount + 1)),
+                    y=[0],
+                    showlegend=False,
+                )
+            ],
+            layout=go.Layout(
+                xaxis_title="Iteration num",
+                yaxis_title="Cost",
+                title="Cost curve"
+            ),
         )
 
     if figure is None:
         figure = go.Figure(
             data=[
+                go.Scatter(
+                    x=[0],
+                    y=[0],
+                    mode="lines",
+                    line=dict(width=0),
+                    showlegend=False,
+                ),
                 go.Scatter(
                     x=[0],
                     y=[0],
@@ -439,22 +484,51 @@ def update_graph(
             layout=go.Layout(
                 xaxis_title=feature_value,
                 yaxis_title=predicted_value,
+                title="Regression curve",
                 hovermode="closest",
                 clickmode="event+select",
             ),
         )
 
     if triggered_id == "add-point" and x is not None and y is not None:
-        new_trace = {
+        x_vals.append(x)
+        y_vals.append(y)
+        print(x_vals)
+        res_x, res_y, costs = gradient_descent(x_vals, y_vals, learning_rate, iteration_amount)
+        
+        figure["data"].pop(0)
+        figure["data"].insert(0,
+            {
+                "x": res_x,
+                "y": res_y,
+                "mode": "lines",
+                "type": "line",
+                "line": {"color": "blue", "width": 2},
+                "name": "Regression line",
+            }
+        )
+
+        figure["data"].append({
             "x": [x],
             "y": [y],
             "mode": "markers",
             "marker": {"color": "red", "symbol": "x", "size": 10},
             "name": f"({x:.2f}, {y:2f})",
             "type": "scatter",
-        }
+        })
+        
+        cost_figure["data"] = [
+            go.Scatter(
+                x = list(range(iteration_amount + 1)),
+                y =  costs,
+            )
+        ]
 
-        figure["data"].append(new_trace)
+    cost_figure["layout"].update(
+        xaxis_title="Iteration num",
+        yaxis_title="Cost",
+        title="Cost curve"
+    )
 
     figure["layout"].update(
         xaxis_title=feature_value,
@@ -463,6 +537,8 @@ def update_graph(
     )
 
     return (
+        cost_figure,
+        {"display": "block" if graph_visible else "none"},
         figure,
         {"display": "block" if graph_visible else "none"},
         no_update,
@@ -475,13 +551,13 @@ def update_graph(
         no_update,
     )
 
-
 @app.callback(
     Output("output-data-upload", "children"),
     Output("error-toast", "is_open"),
     Input("upload-data", "contents"),
     State("upload-data", "filename"),
 )
+
 def update_output(contents, filename):
     if contents:
         if not filename.endswith(".xlsx"):
