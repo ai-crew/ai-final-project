@@ -7,12 +7,12 @@ import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 from dash.dependencies import Input, Output, State
 from dash import Dash, html, dcc, dash_table, no_update
-from linear_regression import linear_func
-from linear_regression import cost_func
-from linear_regression import total_cost
-from linear_regression import gradient
 from linear_regression import gradient_descent
 
+# from linear_regression import linear_func
+# from linear_regression import cost_func
+# from linear_regression import total_cost
+# from linear_regression import gradient
 
 app = Dash(
     __name__,
@@ -45,14 +45,14 @@ graph_tab = dbc.Card(
                         [
                             dbc.InputGroup(
                                 [
-                                    dbc.InputGroupText("Feature Value"),
+                                    dbc.InputGroupText("Feature Label"),
                                     dbc.Input(id="feature-input", type="text"),
                                 ],
                                 className="mb-3",
                             ),
                             dbc.InputGroup(
                                 [
-                                    dbc.InputGroupText("Predicted Value"),
+                                    dbc.InputGroupText("Predicted Label"),
                                     dbc.Input(id="predicted-input", type="text"),
                                 ],
                                 className="mb-3",
@@ -80,6 +80,18 @@ graph_tab = dbc.Card(
                                     dbc.InputGroupText("Y Value"),
                                     dbc.Input(id="y-input", type="number"),
                                 ],
+                                className="mb-3",
+                            ),
+                            dbc.Checklist(
+                                options=[
+                                    {
+                                        "label": "Allow Duplicates",
+                                        "value": "allow_duplicates",
+                                    }
+                                ],
+                                id="allow-duplicates",
+                                inline=True,
+                                switch=True,
                                 className="mb-3",
                             ),
                             dbc.Button(
@@ -133,12 +145,12 @@ graph_tab = dbc.Card(
             html.Div(
                 [
                     dbc.Toast(
-                        "Please fill in the input boxes",
+                        "Please fill in the graph labels",
                         id="input-error-toast",
                         header="Missing Input",
                         is_open=False,
                         dismissable=True,
-                        icon="danger",
+                        icon="warning",
                         duration=4000,
                     ),
                     dbc.Toast(
@@ -147,7 +159,16 @@ graph_tab = dbc.Card(
                         header="Missing Coordinates",
                         is_open=False,
                         dismissable=True,
-                        icon="danger",
+                        icon="warning",
+                        duration=4000,
+                    ),
+                    dbc.Toast(
+                        "Toggle the checkbox to allow duplicate data points",
+                        id="duplicates-error-toast",
+                        header="Duplicate Error",
+                        is_open=False,
+                        dismissable=True,
+                        icon="warning",
                         duration=4000,
                     ),
                 ],
@@ -157,14 +178,8 @@ graph_tab = dbc.Card(
                     "right": "2rem",
                 },
             ),
-            dcc.Graph(
-                id="cost-graph",
-                style={"display": "none"}
-                ),
-            dcc.Graph(
-                id="regression-graph", 
-                style={"display": "none"}
-                ),
+            dcc.Graph(id="regression-graph", style={"display": "none"}),
+            dcc.Graph(id="cost-graph", style={"display": "none"}),
             html.Div(id="graph-visible", style={"display": "none"}, children="False"),
             dbc.Button(
                 "Start Over",
@@ -177,62 +192,6 @@ graph_tab = dbc.Card(
     className="mt-3",
 )
 
-
-file_tab = dbc.Card(
-    dbc.CardBody(
-        [
-            html.Div(
-                [
-                    html.Center(
-                        [
-                            html.P(
-                                "Make sure that the table has appropriate column headers that can be extracted as features"
-                            ),
-                            html.P(
-                                [
-                                    "Try and make sure that there is no missing data in the table, click ",
-                                    html.A(
-                                        "here",
-                                        href="https://www.analyticsvidhya.com/blog/2021/05/dealing-with-missing-values-in-python-a-complete-guide/",
-                                        target="_blank",
-                                    ),
-                                    " for more information",
-                                ],
-                            ),
-                        ],
-                        style={"fontSize": 15},
-                    ),
-                ]
-            ),
-            html.Div(
-                [
-                    dcc.Upload(
-                        id="upload-data",
-                        children=html.Div(
-                            ["Drag and Drop or ", html.A("Select Files")]
-                        ),
-                        style={
-                            "width": "95%",
-                            "height": "60px",
-                            "lineHeight": "60px",
-                            "borderWidth": "1px",
-                            "borderStyle": "dashed",
-                            "borderRadius": "5px",
-                            "textAlign": "center",
-                            "marginBottom": "2.5%",
-                            "cursor": "pointer",
-                        },
-                        multiple=False,
-                    ),
-                    html.Div(id="output-data-upload"),
-                ]
-            ),
-        ]
-    ),
-    className="mt-3",
-)
-
-
 app.layout = html.Div(
     [
         html.Center([html.H1("Linear Regression Tool")], style={"marginTop": 20}),
@@ -242,7 +201,8 @@ app.layout = html.Div(
             [
                 html.H2("What is this tool?", style={"marginLeft": 20}),
                 html.P(
-                    "This is a tool for visualizing linear regression, and getting a better understanding of linear regression through playing with parameters.",
+                    "This is a tool for visualizing linear regression, and getting a better understanding"
+                    + "of linear regression through playing with parameters.",
                     style={"fontSize": 15, "marginLeft": 40},
                 ),
             ],
@@ -252,7 +212,7 @@ app.layout = html.Div(
             [
                 html.H2("How to use?", style={"marginLeft": 20}),
                 html.P(
-                    "You can create a graph and adjust the values as you see fit, or simply upload an Excel file with your data.",
+                    "You can create a graph and adjust the values as you see fit",
                     style={"fontSize": 15, "marginLeft": 40},
                 ),
                 html.Br(),
@@ -260,7 +220,6 @@ app.layout = html.Div(
                     dbc.Tabs(
                         [
                             dbc.Tab(label="Graph", tab_id="tab-1"),
-                            dbc.Tab(label="File", tab_id="tab-2"),
                         ],
                         id="tabs",
                         active_tab="tab-1",
@@ -297,10 +256,9 @@ app.layout = html.Div(
 def parse_contents(contents, filename):
     content_type, content_string = contents.split(",")
     decoded = base64.b64decode(content_string)
-
+    df = None
     if "xlsx" in filename:
         df = pd.read_excel(io.BytesIO(decoded))
-
     return df
 
 
@@ -308,8 +266,6 @@ def parse_contents(contents, filename):
 def switch_tab(at):
     if at == "tab-1":
         return graph_tab
-    elif at == "tab-2":
-        return file_tab
     return html.P("Error rendering tabs...")
 
 
@@ -328,7 +284,6 @@ def show_coordinates_error(n_clicks, x_value, y_value):
     Output("clicked-coordinates", "children"),
     Input("regression-graph", "clickData"),
 )
-
 def display_click_data(click_data):
     if click_data:
         x = click_data["points"][0]["x"]
@@ -340,6 +295,7 @@ def display_click_data(click_data):
 # App variables
 x_vals = []
 y_vals = []
+
 
 @app.callback(
     [
@@ -355,10 +311,12 @@ y_vals = []
         Output("iteration_amount", "value"),
         Output("graph-visible", "children"),
         Output("input-error-toast", "is_open"),
+        Output("duplicates-error-toast", "is_open"),
     ],
     [
         Input("create-graph", "n_clicks"),
         Input("add-point", "n_clicks"),
+        Input("param_update", "n_clicks"),
         Input("restart-button", "n_clicks"),
     ],
     [
@@ -370,11 +328,13 @@ y_vals = []
         State("iteration_amount", "value"),
         State("regression-graph", "figure"),
         State("cost-graph", "figure"),
+        State("allow-duplicates", "value"),
     ],
 )
 def update_graph(
     n_clicks_create,
     n_clicks_add_point,
+    n_clicks_param_update,
     n_clicks_restart,
     feature_value,
     predicted_value,
@@ -384,6 +344,7 @@ def update_graph(
     iteration_amount,
     figure,
     cost_figure,
+    allow_duplicates,
 ):
     ctx = dash.callback_context
     if not ctx.triggered:
@@ -391,21 +352,21 @@ def update_graph(
 
     triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
     if triggered_id == "restart-button":
-        empty_figure = go.Figure()  # Create an empty figure
-
+        empty_figure = go.Figure()
         return (
-            empty_figure,  # Reset cost_figure to the empty figure
-            {"display": "none"},  # Hide the graph
-            empty_figure,  # Reset figure to the empty figure
-            {"display": "none"},  # Hide the graph
-            "",  # Empty feature-input value
-            "",  # Empty predicted-input value
-            None,  # Empty x-input value
-            None,  # Empty y-input value
-            0.002,  # Reset learning rate to default value
-            100,  # Reset iteration amount to default value
-            "False",  # Set graph-visible to False
-            no_update,  # No update for input-error-toast
+            empty_figure,
+            {"display": "none"},
+            empty_figure,
+            {"display": "none"},
+            "",
+            "",
+            None,
+            None,
+            0.002,
+            100,
+            "False",
+            no_update,
+            no_update,
         )
 
     if feature_value is None or predicted_value is None:
@@ -422,8 +383,10 @@ def update_graph(
             no_update,
             no_update,
             True,
+            no_update,
         )
 
+    graph_visible = False
     if (
         n_clicks_create is not None
         and feature_value is not None
@@ -445,9 +408,10 @@ def update_graph(
             no_update,
             no_update,
             {"display": "none"},
+            no_update,
         )
-    
-    if cost_figure is None: 
+
+    if cost_figure is None:
         cost_figure = go.Figure(
             data=[
                 go.Scatter(
@@ -457,9 +421,7 @@ def update_graph(
                 )
             ],
             layout=go.Layout(
-                xaxis_title="Iteration num",
-                yaxis_title="Cost",
-                title="Cost curve"
+                xaxis_title="Iterations", yaxis_title="Cost", title="Cost Curve"
             ),
         )
 
@@ -479,25 +441,63 @@ def update_graph(
                     mode="markers",
                     marker=dict(size=0, opacity=0),
                     showlegend=False,
-                )
+                ),
             ],
             layout=go.Layout(
                 xaxis_title=feature_value,
                 yaxis_title=predicted_value,
-                title="Regression curve",
+                title="Regression Curve",
                 hovermode="closest",
                 clickmode="event+select",
             ),
         )
 
+    if (
+        triggered_id == "param_update"
+        and learning_rate is not None
+        and iteration_amount is not None
+    ):
+        res_x, res_y, costs = gradient_descent(
+            x_vals, y_vals, learning_rate, iteration_amount
+        )
+        cost_figure["data"] = [
+            go.Scatter(
+                x=list(range(iteration_amount + 1)),
+                y=costs,
+            )
+        ]
+
+    allow_duplicates = (
+        allow_duplicates is not None and "allow_duplicates" in allow_duplicates
+    )
+
     if triggered_id == "add-point" and x is not None and y is not None:
+        if not allow_duplicates and x in x_vals and y in y_vals:
+            return (
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                True,
+            )
         x_vals.append(x)
         y_vals.append(y)
-        print(x_vals)
-        res_x, res_y, costs = gradient_descent(x_vals, y_vals, learning_rate, iteration_amount)
-        
+        # print(x_vals)
+        res_x, res_y, costs = gradient_descent(
+            x_vals, y_vals, learning_rate, iteration_amount
+        )
+
         figure["data"].pop(0)
-        figure["data"].insert(0,
+        figure["data"].insert(
+            0,
             {
                 "x": res_x,
                 "y": res_y,
@@ -505,29 +505,29 @@ def update_graph(
                 "type": "line",
                 "line": {"color": "blue", "width": 2},
                 "name": "Regression line",
+            },
+        )
+
+        figure["data"].append(
+            {
+                "x": [x],
+                "y": [y],
+                "mode": "markers",
+                "marker": {"color": "red", "symbol": ".", "size": 10},
+                "name": f"({x:.2f}, {y:.2f})",
+                "type": "scatter",
             }
         )
 
-        figure["data"].append({
-            "x": [x],
-            "y": [y],
-            "mode": "markers",
-            "marker": {"color": "red", "symbol": "x", "size": 10},
-            "name": f"({x:.2f}, {y:2f})",
-            "type": "scatter",
-        })
-        
         cost_figure["data"] = [
             go.Scatter(
-                x = list(range(iteration_amount + 1)),
-                y =  costs,
+                x=list(range(iteration_amount + 1)),
+                y=costs,
             )
         ]
 
     cost_figure["layout"].update(
-        xaxis_title="Iteration num",
-        yaxis_title="Cost",
-        title="Cost curve"
+        xaxis_title="Iteration num", yaxis_title="Cost", title="Cost curve"
     )
 
     figure["layout"].update(
@@ -549,7 +549,9 @@ def update_graph(
         no_update,
         str(graph_visible),
         no_update,
+        no_update,
     )
+
 
 @app.callback(
     Output("output-data-upload", "children"),
@@ -557,7 +559,6 @@ def update_graph(
     Input("upload-data", "contents"),
     State("upload-data", "filename"),
 )
-
 def update_output(contents, filename):
     if contents:
         if not filename.endswith(".xlsx"):

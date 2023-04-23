@@ -1,12 +1,14 @@
 def linear_func(x, w, b):
     return w * x + b
 
+
 def cost_func(x, y, w, b):
-    return (linear_func(x, w, b) - y)**2
+    return (linear_func(x, w, b) - y) ** 2
+
 
 def total_cost(x, y, w, b):
-    '''
-    Computes the total cost of a linear regression model 
+    """
+    Computes the total cost of a linear regression model
     with parameters w and b.
     Arguments:
     x: an array of the input values of each point
@@ -15,7 +17,7 @@ def total_cost(x, y, w, b):
     b: the y-intercept of the linear model
     Returns:
     cost: a float denoting the total cost
-    '''
+    """
     m = len(x)
     cost = 0
 
@@ -25,13 +27,15 @@ def total_cost(x, y, w, b):
 
     return cost
 
+
 def gradient(x, y, w, b):
     dw = (linear_func(x, w, b) - y) * x
-    db = (linear_func(x, w, b) - y)
+    db = linear_func(x, w, b) - y
     return dw, db
 
+
 def gradient_descent(x, y, alpha, iters):
-    '''
+    """
     Performs gradient descent and returns the final x and y
     values of the estimation model.
     Arguments:
@@ -43,7 +47,7 @@ def gradient_descent(x, y, alpha, iters):
     x_model: an array of the input values of each point
     y_model: an array of the corresponding output values returned from the final model
     cost_vals: an array that records the total cost of the linear model at each iteration
-    '''
+    """
     w = 0
     b = 0
     m = len(x)
@@ -58,10 +62,10 @@ def gradient_descent(x, y, alpha, iters):
         dw = dw / m
         db = db / m
 
-        w = w - alpha * dw                       
+        w = w - alpha * dw
         b = b - alpha * db
         cost_vals.append(total_cost(x, y, w, b))
-    
+
     x_model = []
     y_model = []
     for i in range(m):
