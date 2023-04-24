@@ -532,12 +532,36 @@ def update_graph(
             )
         ]
 
+        figure["data"] = []
+        figure["data"].insert(
+            0,
+            {
+                "x": res_x,
+                "y": res_y,
+                "mode": "lines",
+                "type": "line",
+                "line": {"color": "blue", "width": 2},
+                "name": "Regression line",
+            },
+        )
+        for i, j in zip(x_vals, y_vals): 
+            figure["data"].append(
+                {
+                    "x": [i],
+                    "y": [j],
+                    "mode": "markers",
+                    "marker": {"color": "red", "symbol": ".", "size": 10},
+                    "name": f"({i:.2f}, {j:.2f})",
+                    "type": "scatter",
+                }
+            )
+
     allow_duplicates = (
         allow_duplicates is not None and "allow_duplicates" in allow_duplicates
     )
 
     if triggered_id == "add-point" or triggered_id == "data-table" and x is not None and y is not None:
-        if not allow_duplicates and x in x_vals and y in y_vals:
+        if triggered_id == "add-point" and not allow_duplicates and x in x_vals and y in y_vals:
             return (
                 no_update,
                 no_update,
@@ -557,29 +581,28 @@ def update_graph(
             x_vals.append(x)
             y_vals.append(y)
         if triggered_id == "data-table":
-            x_vals = [1, 2, 3]
-            y_vals = [2, 4, 6]
-        #global df
-        #f = df
-        # print(x_vals)
+            x_vals = []
+            y_vals = []
+            for item in data_table_data:
+                x_vals.append(item['X'])
+                y_vals.append(item['Y'])
+   
         res_x, res_y, costs = gradient_descent(
             x_vals, y_vals, learning_rate, iteration_amount
         )
 
-        figure["data"].pop(0)
-        figure["data"].insert(
-            0,
-            {
-                "x": res_x,
-                "y": res_y,
-                "mode": "lines",
-                "type": "line",
-                "line": {"color": "blue", "width": 2},
-                "name": "Regression line",
-            },
-        )
-
         if triggered_id == "add-point":
+            figure["data"].insert(
+                0,
+                {
+                    "x": res_x,
+                    "y": res_y,
+                    "mode": "lines",
+                    "type": "line",
+                    "line": {"color": "blue", "width": 2},
+                    "name": "Regression line",
+                },
+            )
             figure["data"].append(
                 {
                     "x": [x],
@@ -590,9 +613,32 @@ def update_graph(
                     "type": "scatter",
                 }
             )
-        elif triggered_id == "bulk-edit-table":
-            #add stuff here
-            pass
+            figure["data"].pop(0)
+        
+        elif triggered_id == "data-table":
+            figure["data"] = []
+            figure["data"].insert(
+                0,
+                {
+                    "x": res_x,
+                    "y": res_y,
+                    "mode": "lines",
+                    "type": "line",
+                    "line": {"color": "blue", "width": 2},
+                    "name": "Regression line",
+                },
+            )
+            for i, j in zip(x_vals, y_vals): 
+                figure["data"].append(
+                    {
+                        "x": [i],
+                        "y": [j],
+                        "mode": "markers",
+                        "marker": {"color": "red", "symbol": ".", "size": 10},
+                        "name": f"({i:.2f}, {j:.2f})",
+                        "type": "scatter",
+                    }
+                )
 
         cost_figure["data"] = [
             go.Scatter(
