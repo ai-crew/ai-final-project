@@ -25,7 +25,7 @@ server = app.server
 # App variables
 x_vals = []
 y_vals = []
-facade = pd.DataFrame({"X": [0], "Y": [0]})
+facade = pd.DataFrame({"X": x_vals, "Y": y_vals})
 
 graph_tab = dbc.Card(
     dbc.CardBody(
@@ -245,13 +245,9 @@ bulk_input_tab = dbc.Card (
                 html.Center(
                     [
                         html.H1(
-                            "Bulk Data Input",
+                            "View Data",
                             style={"fontSize": 15},
-                        ),
-                        html.P(
-                            "You can then start inputting points by entering x and y coordinates",
-                            style={"fontSize": 15},
-                        ),
+                        )
                     ]
                 ),
             ),
@@ -294,7 +290,7 @@ app.layout = html.Div(
                     dbc.Tabs(
                         [
                             dbc.Tab(label="Graph", children=graph_tab, tab_id="tab-1"),
-                            dbc.Tab(label="Bulk Input", children=bulk_input_tab, tab_id="tab-bulk-input")
+                            dbc.Tab(label="View Data", children=bulk_input_tab, tab_id="tab-bulk-input")
                         ],
                         id="tabs",
                         active_tab="tab-1",
@@ -594,6 +590,9 @@ def update_graph(
                     "type": "scatter",
                 }
             )
+        elif triggered_id == "bulk-edit-table":
+            #add stuff here
+            pass
 
         cost_figure["data"] = [
             go.Scatter(
