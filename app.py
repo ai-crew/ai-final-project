@@ -22,6 +22,11 @@ app = Dash(
 
 server = app.server
 
+# App variables
+x_vals = []
+y_vals = []
+facade = pd.DataFrame({"X": x_vals, "Y": y_vals})
+
 graph_tab = dbc.Card(
     dbc.CardBody(
         [
@@ -192,6 +197,71 @@ graph_tab = dbc.Card(
     className="mt-3",
 )
 
+""" @app.callback(
+        Output('data-table', 'data'),
+        Input('add-row-button', 'n_clicks'),
+        prevent_initial_call=True
+)
+def add_row(n_clicks):
+    #df.at[0, 'Y'] = n_clicks
+    x_vals.append('')
+    y_vals.append('')
+    return facade.to_dict('records') """
+
+@app.callback(
+        Output('data-table', 'data', allow_duplicate=True),
+        #Input('data-table', 'data'),
+        Input("add-point", "n_clicks"),
+        Input("x-input", "value"),
+        Input("y-input", "value"),
+        prevent_initial_call=True,
+)
+def update_data(n_clicks, x_val, y_val):
+    global x_vals
+    global y_vals
+    if dash.callback_context.triggered_id == 'add-point':
+        facade = pd.DataFrame({"X": x_vals, "Y": y_vals})
+        return facade.to_dict('records')
+    return no_update
+   
+
+""" @app.callback(
+       Output('data-table', 'data', allow_duplicate=True),
+       Input('data-table', 'data'),
+       prevent_initial_call=True
+)
+def update_graphs(data):
+    # Edit the current index
+    x_vals[active_cell['row']] = 100
+    facade = pd.DataFrame({"X": x_vals, "Y": y_vals})
+    return facade.to_dict('records') """
+
+
+# Bulk input tab
+bulk_input_tab = dbc.Card (
+    dbc.CardBody (
+        [
+            html.Div(
+                html.Center(
+                    [
+                        html.H1(
+                            "View Data",
+                            style={"fontSize": 15},
+                        )
+                    ]
+                ),
+            ),
+            dash_table.DataTable(facade.to_dict('records'),  [{"name": i, "id": i, "type": "numeric"} for i in facade.columns], editable=False, id="data-table", row_deletable=True),
+            dbc.Button(
+                "Add Row",
+                id="add-row-button",
+                color="danger",
+                className="mt-3",
+            ),
+        ]
+    )
+)
+
 app.layout = html.Div(
     [
         html.Center([html.H1("Linear Regression Tool")], style={"marginTop": 20}),
@@ -219,7 +289,8 @@ app.layout = html.Div(
                 html.Center(
                     dbc.Tabs(
                         [
-                            dbc.Tab(label="Graph", tab_id="tab-1"),
+                            dbc.Tab(label="Graph", children=graph_tab, tab_id="tab-1"),
+                            dbc.Tab(label="View Data", children=bulk_input_tab, tab_id="tab-bulk-input")
                         ],
                         id="tabs",
                         active_tab="tab-1",
@@ -262,13 +333,6 @@ def parse_contents(contents, filename):
     return df
 
 
-@app.callback(Output("tab-content", "children"), [Input("tabs", "active_tab")])
-def switch_tab(at):
-    if at == "tab-1":
-        return graph_tab
-    return html.P("Error rendering tabs...")
-
-
 @app.callback(
     Output("coordinates-error-toast", "is_open"),
     [Input("add-point", "n_clicks")],
@@ -292,10 +356,6 @@ def display_click_data(click_data):
     return "No coordinates clicked yet."
 
 
-# App variables
-x_vals = []
-y_vals = []
-
 
 @app.callback(
     [
@@ -318,6 +378,7 @@ y_vals = []
         Input("add-point", "n_clicks"),
         Input("param_update", "n_clicks"),
         Input("restart-button", "n_clicks"),
+        Input("data-table", "data"),
     ],
     [
         State("feature-input", "value"),
@@ -336,6 +397,7 @@ def update_graph(
     n_clicks_add_point,
     n_clicks_param_update,
     n_clicks_restart,
+    data_table_data,
     feature_value,
     predicted_value,
     x,
@@ -349,6 +411,9 @@ def update_graph(
     ctx = dash.callback_context
     if not ctx.triggered:
         raise PreventUpdate
+    
+    global x_vals
+    global y_vals
 
     triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
     if triggered_id == "restart-button":
@@ -467,12 +532,36 @@ def update_graph(
             )
         ]
 
+        figure["data"] = []
+        figure["data"].insert(
+            0,
+            {
+                "x": res_x,
+                "y": res_y,
+                "mode": "lines",
+                "type": "line",
+                "line": {"color": "blue", "width": 2},
+                "name": "Regression line",
+            },
+        )
+        for i, j in zip(x_vals, y_vals): 
+            figure["data"].append(
+                {
+                    "x": [i],
+                    "y": [j],
+                    "mode": "markers",
+                    "marker": {"color": "red", "symbol": ".", "size": 10},
+                    "name": f"({i:.2f}, {j:.2f})",
+                    "type": "scatter",
+                }
+            )
+
     allow_duplicates = (
         allow_duplicates is not None and "allow_duplicates" in allow_duplicates
     )
 
-    if triggered_id == "add-point" and x is not None and y is not None:
-        if not allow_duplicates and x in x_vals and y in y_vals:
+    if triggered_id == "add-point" or triggered_id == "data-table" and x is not None and y is not None:
+        if triggered_id == "add-point" and not allow_duplicates and x in x_vals and y in y_vals:
             return (
                 no_update,
                 no_update,
@@ -488,36 +577,68 @@ def update_graph(
                 no_update,
                 True,
             )
-        x_vals.append(x)
-        y_vals.append(y)
-        # print(x_vals)
+        if triggered_id == "add-point":
+            x_vals.append(x)
+            y_vals.append(y)
+        if triggered_id == "data-table":
+            x_vals = []
+            y_vals = []
+            for item in data_table_data:
+                x_vals.append(item['X'])
+                y_vals.append(item['Y'])
+   
         res_x, res_y, costs = gradient_descent(
             x_vals, y_vals, learning_rate, iteration_amount
         )
 
-        figure["data"].pop(0)
-        figure["data"].insert(
-            0,
-            {
-                "x": res_x,
-                "y": res_y,
-                "mode": "lines",
-                "type": "line",
-                "line": {"color": "blue", "width": 2},
-                "name": "Regression line",
-            },
-        )
-
-        figure["data"].append(
-            {
-                "x": [x],
-                "y": [y],
-                "mode": "markers",
-                "marker": {"color": "red", "symbol": ".", "size": 10},
-                "name": f"({x:.2f}, {y:.2f})",
-                "type": "scatter",
-            }
-        )
+        if triggered_id == "add-point":
+            figure["data"].insert(
+                0,
+                {
+                    "x": res_x,
+                    "y": res_y,
+                    "mode": "lines",
+                    "type": "line",
+                    "line": {"color": "blue", "width": 2},
+                    "name": "Regression line",
+                },
+            )
+            figure["data"].append(
+                {
+                    "x": [x],
+                    "y": [y],
+                    "mode": "markers",
+                    "marker": {"color": "red", "symbol": ".", "size": 10},
+                    "name": f"({x:.2f}, {y:.2f})",
+                    "type": "scatter",
+                }
+            )
+            figure["data"].pop(0)
+        
+        elif triggered_id == "data-table":
+            figure["data"] = []
+            figure["data"].insert(
+                0,
+                {
+                    "x": res_x,
+                    "y": res_y,
+                    "mode": "lines",
+                    "type": "line",
+                    "line": {"color": "blue", "width": 2},
+                    "name": "Regression line",
+                },
+            )
+            for i, j in zip(x_vals, y_vals): 
+                figure["data"].append(
+                    {
+                        "x": [i],
+                        "y": [j],
+                        "mode": "markers",
+                        "marker": {"color": "red", "symbol": ".", "size": 10},
+                        "name": f"({i:.2f}, {j:.2f})",
+                        "type": "scatter",
+                    }
+                )
 
         cost_figure["data"] = [
             go.Scatter(
@@ -543,8 +664,8 @@ def update_graph(
         {"display": "block" if graph_visible else "none"},
         no_update,
         no_update,
-        no_update,
-        no_update,
+        '', # new value of X value input
+        '', # new value of Y value input
         no_update,
         no_update,
         str(graph_visible),
