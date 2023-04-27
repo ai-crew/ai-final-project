@@ -1,5 +1,5 @@
 from dash import no_update
-from dash import html, dcc, callback, Input, Output, State, exceptions, register_page, callback_context
+from dash import html, dcc, callback, Input, Output, State, exceptions, callback_context
 import pandas as pd
 import base64
 import io
@@ -8,8 +8,6 @@ from linear_regression import gradient_descent_returns_weights_and_biases
 import dash_bootstrap_components as dbc
 import numpy as np
 import uuid
-import json
-#  TODO: remove stuff in parentheses for toggle ON...after determining if file has header and displaying it
 
 layout = html.Div(
 
@@ -349,15 +347,62 @@ layout = html.Div(
                 dbc.Row(
                     [
                         dbc.Col(children=[
-                            html.Div(id='stats-container', children=[
-                                html.Div(id='cost'),
-                                html.Div(id='weight'),
-                                html.Div(id='bias'),
-                                html.Div(id='equation'),
+                                dbc.Row(
+                                    id='stats-container',
+                                    children=[
+                                        html.H4("Results"),
+                                        html.Div("Equation of line", style={
+                                            "font-weight": "bold"}),
+                                        dbc.Row(
+                                            children=[
+                                                dbc.Col(
+                                                    html.Div(id="equation")),
+                                                dbc.Col(dcc.Clipboard(
+                                                        target_id="equation"), width=2, style={"color": "deepskyblue"})
+                                            ],
+                                            className="stats"
+                                        ),
+                                        html.Div("Weight", style={
+                                            "font-weight": "bold"}),
+                                        dbc.Row(
+                                            children=[
+                                                dbc.Col(
+                                                    html.Div(id="weight")),
+                                                dbc.Col(dcc.Clipboard(
+                                                        target_id="weight"), width=2, style={"color": "deepskyblue"})
+                                            ],
+                                            className="stats"
+                                        ),
+                                        html.Div("Bias", style={
+                                            "font-weight": "bold"}),
+                                        dbc.Row(
+                                            children=[
+                                                dbc.Col(
+                                                    html.Div(id="bias")),
+                                                dbc.Col(dcc.Clipboard(
+                                                        target_id="bias"), width=2, style={"color": "deepskyblue"})
+                                            ],
+                                            className="stats"
+                                        ),
+                                        html.Div("Final Cost", style={
+                                            "font-weight": "bold"}),
+                                        dbc.Row(
+                                            children=[
+                                                dbc.Col(
+                                                    html.Div(id="cost")),
+                                                dbc.Col(dcc.Clipboard(
+                                                        target_id="cost"), width=2, style={"color": "deepskyblue"})
+                                            ],
+                                            className="stats"
+                                        ),
+                                    ],
+                                    align="top",
+                                    className="flex-stats-container",
+                                )
 
-                            ]),
-                        ],
-                            style={"padding-top": "2rem"}),
+
+                                ],
+                                style={"padding-top": "2rem"}),
                         dbc.Col(
                             children=[
                                 html.Div(
@@ -402,148 +447,6 @@ layout = html.Div(
 
     ]
 )
-
-
-@ callback(
-    Output('stats-container', 'children'),
-    Input('upload-data-component', 'contents'),
-    Input("x-axis-label", "value"),
-    Input("y-axis-label", "value"),
-    State('upload-data-component', 'filename'),
-    State('upload-data-component', 'last_modified'),
-    State("input-fields-container", "children"),
-    Input('add-point-btn', 'n_clicks'),
-
-
-)
-def update_stats_container(list_of_contents, list_of_names, list_of_dates, x_axis_label, y_axis_label, input_fields, n_clicks_add_point_btn):
-    stats_html = dbc.Row(
-        id='stats-container',
-        children=[
-            html.H4("Results"),
-            html.Div("Equation of line", style={"font-weight": "bold"}),
-            dbc.Row(
-                children=[
-                    dbc.Col(html.Div(id="equation")),
-                    dbc.Col(dcc.Clipboard(
-                            target_id="equation"), width=2, style={"color": "deepskyblue"})
-                ],
-                className="stats"
-            ),
-            html.Div("Weight", style={"font-weight": "bold"}),
-            dbc.Row(
-                children=[
-                    dbc.Col(html.Div(id="weight")),
-                    dbc.Col(dcc.Clipboard(
-                            target_id="weight"), width=2, style={"color": "deepskyblue"})
-                ],
-                className="stats"
-            ),
-            html.Div("Bias", style={"font-weight": "bold"}),
-            dbc.Row(
-                children=[
-                    dbc.Col(html.Div(id="bias")),
-                    dbc.Col(dcc.Clipboard(
-                            target_id="bias"), width=2, style={"color": "deepskyblue"})
-                ],
-                className="stats"
-            ),
-            html.Div("Final Cost", style={"font-weight": "bold"}),
-            dbc.Row(
-                children=[
-                    dbc.Col(html.Div(id="cost")),
-                    dbc.Col(dcc.Clipboard(
-                            target_id="cost"), width=2, style={"color": "deepskyblue"})
-                ],
-                className="stats"
-            ),
-        ],
-        align="top",
-        className="flex-stats-container",
-    )
-
-    if list_of_contents is not None or input_fields is not None:
-        return stats_html
-
-    return dbc.Row(
-        children=[
-            html.Div(
-                children=[
-
-                    html.H4("Results", style={
-                        "opacity": 0}),
-                    html.Div("Equation of line", style={
-                        "font-weight": "bold", "opacity": 0}),
-                    dbc.Row(
-                        children=[
-                            dbc.Col(html.Div(id="equation"),
-                                    style={"opacity": 0}),
-                            dbc.Col(dcc.Clipboard(target_id="equation"), width=2,
-                                    style={"color": "deepskyblue", "opacity": 0})
-                        ],
-                        className="stats"
-                    ),
-
-                    html.Div("Weight", style={
-                        "font-weight": "bold", "opacity": 0}),
-                    dbc.Row(
-                        children=[
-                            dbc.Col(html.Div(id="weight"),
-                                    style={"opacity": 0}),
-                            dbc.Col(dcc.Clipboard(target_id="weight"), width=2,
-                                    style={"color": "deepskyblue", "opacity": 0})
-                        ],
-                        className="stats"
-                    ),
-                    html.Div("Bias", style={
-                        "font-weight": "bold", "opacity": 0}),
-                    dbc.Row(
-                        children=[
-                            dbc.Col(html.Div(id="bias"),
-                                    style={"opacity": 0}),
-                            dbc.Col(dcc.Clipboard(target_id="bias"), width=2,
-                                    style={"color": "deepskyblue", "opacity": 0})
-                        ],
-                        className="stats"
-                    ),
-                    html.Div("Final Cost", style={
-                        "font-weight": "bold", "opacity": 0}),
-                    dbc.Row(
-                        children=[
-                            dbc.Col(html.Div(id="cost"),
-                                    style={"opacity": 0}),
-                            dbc.Col(dcc.Clipboard(target_id="cost"), width=2,
-                                    style={"color": "deepskyblue", "opacity": 0})
-                        ],
-                        className="stats"
-                    ),
-
-                    html.Div(
-                        style={
-                            "width": "100%",
-                            "height": "100%",
-                            "display": "flex",
-                            "alignItems": "center",
-                            "justifyContent": "center",
-                            "position": "absolute",
-                            "top": "50%",
-                            "left": "50%",
-                            "transform": "translate(-50%, -50%)",
-                            "backgroundColor": "#e5ecf6",
-                            "padding": "1rem"
-                        },
-                        children=[
-                            html.Div("Please upload a file or add points to view results",
-                                     className="stats-overlay")
-                        ]
-                    )
-                ],
-                style={"position": "relative"}
-            )
-        ],
-        align="top",
-        className="flex-stats-container",
-    )
 
 
 @callback(
@@ -601,21 +504,6 @@ def toggle_modal_and_add_input_fields(add_more_points_n_clicks, add_point_n_clic
             return no_update, not is_open, html.Div()
         return no_update, is_open, False
     elif triggered_id == triggered_id == 'add-point-btn':
-        # added_points = pd.DataFrame(columns=[x_axis_label, y_axis_label])
-        # for input_field in input_fields:
-        #     try:
-        #         x = input_field['props']['children'][0]['props']['value']
-        #         y = input_field['props']['children'][1]['props']['value']
-        #         added_points = pd.concat([added_points, pd.DataFrame(
-        #             [[x, y]], columns=[x_axis_label, y_axis_label])])
-        #     except:
-        #         continue
-        #  check if there's at least 3 points (can't be empty)
-        # print(added_points)
-        # if len(added_points) < 3:
-        # return no_update, is_open, html.Div(children="Error: You need at least 3 points to fit a line.", style={"color": "red",
-        # "padding": "8px 0"})
-        # print(added_points)
         return no_update, not is_open, html.Div()
 
     else:
@@ -755,14 +643,7 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
     )
 
     if submit_points < 1 and list_of_contents is None:
-        return [
-            regression_fig,
-            cost_fig,
-            html.Div(children=0),
-            html.Div(children=0),
-            html.Div(children=0),
-            html.Div(children=0)
-        ]
+        raise exceptions.PreventUpdate
 
     df_uploaded = pd.DataFrame(columns=[x_axis_label, y_axis_label])
     df_added_points = pd.DataFrame(columns=[x_axis_label, y_axis_label])
@@ -776,23 +657,19 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
             dataframes.columns = [x_axis_label, y_axis_label]
             df_uploaded = dataframes
     if submit_points is not None:
-        print("in submit points")
         for input_field in input_fields_children:
-            print("in for")
             try:
-                # TODO: check this if you change object properties again
+                # NOTE: check this if you change object properties again
                 x = input_field['props']['children'][0]['props']['children'][1]['props']['value']
                 y = input_field['props']['children'][1]['props']['children'][1]['props']['value']
                 df_added_points = pd.concat([df_added_points, pd.DataFrame(
                     [[x, y]], columns=[x_axis_label, y_axis_label])])
             except Exception as e:
-                print("Error:", e)
-
+                print("Error in points stuff:", e)
                 continue
     df = pd.concat([df_uploaded, df_added_points])
 
     if len(df.columns) != 2:
-        print("Invalid file format for 2D regression. Please upload a valid .csv or .xslx file (see sample.csv)")
         return [
             regression_fig,
             cost_fig,
@@ -803,7 +680,6 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
         ]
     else:
         # continue with regression and cost calculations
-
         init_b = float(init_b) if init_b else float(0)
         init_w = float(init_w) if init_w else float(0)
         learning_rate = float(
@@ -811,7 +687,6 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
         iteration_amount = int(
             iteration_amount) if iteration_amount else int(100)
 
-        # TODO: determine if file contains header row!
         x_values = df[x_axis_label].to_numpy()
         y_values = df[y_axis_label].to_numpy()
 

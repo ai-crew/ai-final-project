@@ -509,7 +509,5 @@ def create_graphs(
         html.Div(children=b),
         html.Div(children=[dcc.Markdown(
             f"y = **{w_rounded}**x + **{b_rounded}**")]),
-        # html.Div(children=x_var),
-        # html.Div(children=y_var)
 
     ]
