@@ -98,6 +98,8 @@ def gradient_descent(x, y, alpha, iters, init_w=0, init_b=0):
 
 
 def gradient_descent_returns_weights_and_biases(x, y, alpha=0.001, iters=100, init_w=0, init_b=0):
+    print(x)
+    print(y)
     w = init_w
     b = init_b
     m = len(x)

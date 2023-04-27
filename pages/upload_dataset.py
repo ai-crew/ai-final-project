@@ -1,3 +1,4 @@
+from dash import no_update
 from dash import html, dcc, callback, Input, Output, State, exceptions, register_page, callback_context
 import pandas as pd
 import base64
@@ -7,11 +8,13 @@ from linear_regression import gradient_descent_returns_weights_and_biases
 import dash_bootstrap_components as dbc
 import numpy as np
 import uuid
+import json
 #  TODO: remove stuff in parentheses for toggle ON...after determining if file has header and displaying it
 
 layout = html.Div(
 
     children=[
+
         html.Div(
             children=[
                 html.H1("Upload Your Own Dataset To Explore (2-variables)",
@@ -65,7 +68,7 @@ layout = html.Div(
                     ],
                     className="padded-container",
                 ),
-                html.Div (
+                html.Div(
                     children=[
                         html.Button(
                             className="button-container",
@@ -80,37 +83,45 @@ layout = html.Div(
                             ],
                             id="add-point-modal-open-btn"
                         ),
-                        dbc.Modal(
-                            [
-                                dbc.ModalHeader(dbc.ModalTitle("Add Point")),
-                                dbc.ModalBody(
-                                    children=[
-                                        html.P("Add a point to the dataset"),
-                                        dbc.InputGroup(
-                                            [
-                                                dbc.InputGroupText("X Value"),
-                                                dbc.Input(id="x-input", type="number"),
-                                            ],
-                                            className="mb-3",
-                                        ),
-                                        dbc.InputGroup(
-                                            [
-                                                dbc.InputGroupText("Y Value"),
-                                                dbc.Input(id="y-input", type="number"),
-                                            ],
-                                            className="mb-3",
-                                        ),
-                                    ]
-                                ),
-                                dbc.ModalFooter(
-                                    dbc.Button(
-                                        "Add", id="add-point-btn", className="ms-auto", n_clicks=0
-                                    )
-                                ),
-                            ],
-                            id="modal",
-                            is_open=False,
-                        )
+
+
+                        dbc.Modal([
+                            dbc.ModalHeader([
+                                dbc.ModalTitle("Add Points"),
+                                # html.Button(
+                                #     "Close", id="close-modal", className="btn btn-secondary", style={"margin-left": "auto"}),
+
+                            ]),
+                            dbc.ModalBody([
+                                html.P("Add points to the dataset"),
+
+                                html.Div(id="input-fields-container", children=[
+                                    html.Div([
+                                        dbc.Input(id={"type": "point-input-x", "index": 0},
+                                                  type="number", style={"width": "50%"}),
+                                        dbc.Input(id={"type": "point-input-y", "index": 0},
+                                                  type="number", style={"width": "50%"}),
+                                    ], style={"display": "flex", "justify-content": "space-around", "margin-bottom": "10px"}),
+                                    html.Div([
+                                        dbc.Input(id={"type": "point-input-x", "index": 0},
+                                                  type="number", style={"width": "50%"}),
+                                        dbc.Input(id={"type": "point-input-y", "index": 0},
+                                                  type="number", style={"width": "50%"}),
+                                    ], style={"display": "flex", "justify-content": "space-around", "margin-bottom": "10px"})
+                                ], style={"overflow-y": "auto", "max-height": "400px"}),
+                                html.Div([
+                                    html.I(className="fas fa-plus-square"),
+                                    html.Span(" Add more points", style={
+                                        "cursor": "pointer", "margin-left": "10px"})
+                                ], id="add-more-points", style={"display": "flex", "align-items": "center", "cursor": "pointer", "margin-top": "10px"}),
+                            ]),
+                            dbc.ModalFooter([
+                                dbc.Button("Add", id="add-point-btn",
+                                           className="ms-auto", n_clicks=0),
+
+
+                            ])
+                        ], id="modal", is_open=False)
                     ],
                     className="padded-container mb-3",
                 ),
@@ -367,39 +378,12 @@ layout = html.Div(
                 ),
             ],
         ),
-        html.Div([
-            dbc.Modal([
-                dbc.ModalHeader([
-                    html.H4("Add Points", className="modal-title",
-                            style={"text-align": "center"}),
-                    html.I(className="fas fa-times", id="close-add-points-modal",
-                           style={"cursor": "pointer"}),
-                ]),
-                dbc.ModalBody([
-                    html.Div(id="input-fields-container", children=[
-                        html.Div([
-                            dbc.Input(id={"type": "point-input-x",
-                                          "index": 0}, type="number"),
-                            dbc.Input(id={"type": "point-input-y",
-                                          "index": 0}, type="number")
-                        ], style={"display": "flex", "justify-content": "space-around"})
-                    ], style={"overflow-y": "auto", "max-height": "400px"}),
-                    html.Div([
-                        html.I(className="fas fa-plus-square"),
-                        html.Span(" Add more points", style={
-                                  "cursor": "pointer"})
-                    ], id="add-more-points", style={"display": "flex", "align-items": "center", "cursor": "pointer"})
-                ]),
-                dbc.ModalFooter([
-                    dbc.Button("OK", id="submit-points", color="primary")
-                ])
-            ], id="add-points-modal", is_open=False)
-        ], style={"position": "relative"}),
+
     ]
 )
 
 
-@callback(
+@ callback(
     Output('stats-container', 'children'),
     Input('upload-data-component', 'contents'),
     State('upload-data-component', 'filename'),
@@ -535,36 +519,43 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
 
 
 @callback(
-    Output("add-points-modal", "is_open"),
-    [Input("add-points-button", "n_clicks"),
-     Input("close-add-points-modal", "n_clicks")],
-    [State("add-points-modal", "is_open")],
+    [Output("input-fields-container", "children"),
+     Output("modal", "is_open")],
+    [Input("add-more-points", "n_clicks"),
+     Input("add-point-modal-open-btn", "n_clicks"),
+     Input("add-point-btn", "n_clicks"),
+     ],
+    [State("input-fields-container", "children"),
+     State("modal", "is_open")],
 )
-def toggle_modal(add_points_n_clicks, close_modal_n_clicks, is_open):
-    if add_points_n_clicks or close_modal_n_clicks:
-        return not is_open
-    return is_open
+def toggle_modal_and_add_input_fields(add_more_points_n_clicks, add_point_n_clicks, add_point_btn_n_clicks, children, is_open):
+    ctx = callback_context
+    triggered_id, triggered_prop = ctx.triggered[0]['prop_id'].split('.')
+
+    if triggered_id == 'add-more-points':
+        if add_more_points_n_clicks:
+            new_index = str(uuid.uuid4())
+            new_input = html.Div([
+                dbc.Input(id={"type": "point-input-x", "index": new_index},
+                          type="number", style={"width": "50%"}),
+                dbc.Input(id={"type": "point-input-y", "index": new_index},
+                          type="number", style={"width": "50%"}),
+            ], style={"display": "flex", "justify-content": "space-around", "margin-bottom": "10px"})
+            children.append(new_input)
+        return children, no_update
+
+    elif triggered_id == 'add-point-modal-open-btn':
+        if add_point_n_clicks:
+            return no_update, not is_open
+        return no_update, is_open
+    elif triggered_id == 'add-point-modal-open-btn' or triggered_id == 'add-point-btn':
+        return no_update, not is_open
+
+    else:
+        raise exceptions.PreventUpdate
 
 
-@callback(
-    Output("input-fields-container", "children"),
-    [Input("add-more-points", "n_clicks")],
-    [State("input-fields-container", "children")]
-)
-def add_more_input_fields(n_clicks, children):
-    if n_clicks:
-        new_index = str(uuid.uuid4())
-        new_input = html.Div([
-            dbc.Input(id={"type": "point-input-x",
-                      "index": new_index}, type="number"),
-            dbc.Input(id={"type": "point-input-y",
-                      "index": new_index}, type="number")
-        ], style={"display": "flex", "justify-content": "space-around"})
-        children.append(new_input)
-    return children
-
-
-@callback(
+@ callback(
     [Output("show_label_inputs", "className"),
      Output("x-axis-label", "value"),
      Output("y-axis-label", "value")],
@@ -581,7 +572,7 @@ def show_label_name_inputs(toggle_value, x_axis_label, y_axis_label):
         return "hidden", "X", "Y"
 
 
-@callback(
+@ callback(
     [Output("show_init_w_b", "className"),
      Output("init_w", "value"),
      Output("init_b", "value")],
@@ -599,7 +590,6 @@ def show_init_w_b(toggle_value, init_w, init_b):
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
-    print(filename)
     try:
         if 'csv' in filename:
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), header=None)
@@ -612,10 +602,10 @@ def parse_contents(contents, filename, date):
         return None
 
 
-@callback(Output('file-status-info', 'children'),
-          Input('upload-data-component', 'contents'),
-          State('upload-data-component', 'filename'),
-          State('upload-data-component', 'last_modified'))
+@ callback(Output('file-status-info', 'children'),
+           Input('upload-data-component', 'contents'),
+           State('upload-data-component', 'filename'),
+           State('upload-data-component', 'last_modified'))
 def update_output(list_of_contents, list_of_names, list_of_dates):
 
     if list_of_contents is not None:
@@ -657,24 +647,9 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
     Input("iteration_amount", "value"),
     Input("init_w", "value"),
     Input("init_b", "value"),
-    Input("submit-points", "n_clicks"),
+    Input("add-point-btn", "n_clicks"),
     State("input-fields-container", "children"))
 def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y_axis_label, learning_rate, iteration_amount, init_w, init_b, submit_points, input_fields_children):
-    added_points = []
-    if submit_points is not None:
-        # Parse points added in modal if there's any
-
-        for child in input_fields_children:
-            x_input = child['props']['children'][0]
-            y_input = child['props']['children'][1]
-            point_id_x = x_input['id']["index"]
-            point_id_y = y_input['id']["index"]
-
-            x_value = callback_context.states[f"{{'type': 'point-input-x', 'index': '{point_id_x}'}}.value"]
-            y_value = callback_context.states[f"{{'type': 'point-input-y', 'index': '{point_id_y}'}}.value"]
-
-            if x_value is not None and y_value is not None:
-                added_points.append((x_value, y_value))
 
     regression_fig = go.Figure()
     cost_fig = go.Figure()
@@ -711,13 +686,25 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
         ]
     )
 
+    uploaded_points = []
+    added_points = pd.DataFrame()
+
+    if submit_points is not None:
+        for input_field in input_fields_children:
+            try:
+                x = input_field['props']['children'][0]['props']['value']
+                y = input_field['props']['children'][1]['props']['value']
+                added_points = pd.concat([added_points, pd.DataFrame(
+                    [[x, y]], columns=[x_axis_label, y_axis_label])])
+            except:
+                continue
     children = []
     if list_of_contents is not None:
         children = [
             parse_contents(c, n, d) for c, n, d in
             zip([list_of_contents], [list_of_names], [list_of_dates])]
 
-    if len(children) == 0 and not added_points:
+    if len(children) == 0 and added_points.empty:
         return [
             regression_fig,
             cost_fig,
@@ -725,7 +712,7 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
             html.Div(children=0),
             html.Div(children=0),
             html.Div(children=0)]
-    elif len(children[0]) > 0 and children[0].shape[1] != 2 and not added_points:
+    elif len(children) > 0 and len(children[0]) > 0 and children[0].shape[1] != 2 and added_points.empty:
         return [
             regression_fig,
             cost_fig,
@@ -734,10 +721,16 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
             html.Div(children=0),
             html.Div(children=0)]
     else:
-        df = children[0]
-        if added_points:
-            df = df.append(pd.DataFrame(
-                added_points, columns=df.columns), ignore_index=True)
+        if added_points.empty and (children is None or children == []):
+            raise exceptions.PreventUpdate
+        elif not added_points.empty and children == [] or children is None or children[0] == []:
+            df = pd.DataFrame(added_points)
+        elif not added_points.empty and children[0] is not None:
+            df = pd.concat([children[0], added_points])
+
+        else:
+            pass
+            # or pd.DataFrame(added_points)
 
         init_b = float(init_b) if init_b else float(0)
         init_w = float(init_w) if init_w else float(0)
@@ -746,9 +739,11 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
             iteration_amount) if iteration_amount else int(100)
 
         # TODO: determine if file contains header row!
+        x_values = df[x_axis_label].to_numpy()
+        y_values = df[y_axis_label].to_numpy()
 
         _, _, cost, w, b = gradient_descent_returns_weights_and_biases(
-            df[0], df[1], init_w=init_w, init_b=init_b, alpha=learning_rate, iters=iteration_amount)
+            x_values, y_values, init_w=init_w, init_b=init_b, alpha=learning_rate, iters=iteration_amount)
 
         x_axis_label = x_axis_label if x_axis_label else "X"
         y_axis_label = y_axis_label if y_axis_label else "Y"
@@ -756,11 +751,11 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
         regression_fig = go.Figure()
         # trace for points
         regression_fig.add_trace(go.Scatter(
-            x=df[0], y=df[1], mode='markers',  name="data",   hovertemplate="X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>"))
+            x=df[x_axis_label], y=df[y_axis_label], mode='markers',  name="data",   hovertemplate="X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>"))
 
         # trace for regression line at any point on the line
-        start = min(df[0])
-        end = max(df[0])
+        start = min(df[x_axis_label])
+        end = max(df[x_axis_label])
         range_df = pd.DataFrame(np.arange(start, end, 0.01))
         regression_fig.add_trace(go.Scatter(
             x=range_df[0],
@@ -803,23 +798,14 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
 
         w_rounded = round(w, 3)
         b_rounded = round(b, 3)
+        cost = cost[-1] or 0
 
         return [
             regression_fig,
             cost_fig,
-            html.Div(children=cost[-1]),
+            html.Div(children=cost),
             html.Div(children=w),
             html.Div(children=b),
             html.Div(children=[dcc.Markdown(
                 f"y = **{w_rounded}**x + **{b_rounded}**")])
         ]
-    
-@ callback(
-    Output("modal", "is_open"),
-    [Input("add-point-modal-open-btn", "n_clicks"), Input("add-point-btn", "n_clicks")],
-    [State("modal", "is_open")],
-)
-def toggle_modal(n1, n2, is_open):
-    if n1 or n2:
-        return not is_open
-    return is_open
