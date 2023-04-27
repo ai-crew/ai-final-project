@@ -1,49 +1,34 @@
-from dash import html, dcc, callback, Input, Output, State
-from dash.dependencies import Input, Output
+from dash import html, dcc, callback, Input, Output, State, exceptions, register_page
 import pandas as pd
 import dash_bootstrap_components as dbc
 from linear_regression import gradient_descent, mean_squared_error, calc_correlation_p_value, gradient_descent_returns_weights_and_biases
 import plotly.graph_objects as go
 import numpy as np
 
-# TODO: add links to kaggle for all datasets
+
 datasetList = [
-    {"label": "FIFA 2022 World Cup Data", "value": "fifa.csv"},
     {"label": "Car Price Data", "value": "car_price.csv"},
     {"label": "NYSE Stock Fundamentals Data", "value": "fundamentals.csv"},
-    {"label": "NYSE Stock Prices Data", "value": "prices.csv"},
+    {"label": "CDC Nutrition, Physical Activity, and Obesity Data",
+        "value": "cdc_health_data.csv"},
+    {"label": "Fish Market Data", "value": "fish.csv"},
+
 ]
 
 layout = html.Div(
     children=[
-
-        html.Div(
-            children=[
-                html.H1("Explore Sample Datasets",
-                        style={"font-size": "2rem"}),
-                html.Div(
-                    html.Span(
-                        "Select a dataset to explore",
-                        style={"font-size": "1rem"}
-                    )
-                ),
-                html.Br(),
-            ],
-            style={"text-align": "center"},
-        ),
-
-
-
+        html.H1("Explore Sample Datasets",
+                style={"font-size": "2rem", "text-align": "center", "margin-bottom": "2rem"}),
         html.Div(
             children=[
                 html.Div(
                     children=[
-                        html.Div("Select a Dataset",
-                                 className="menu-title"),
+                        html.Div("Select a Dataset", style={"margin-bottom": ".5rem"}
+                                 ),
                         dcc.Dropdown(
                             id="input-filter",
                             options=datasetList,
-                            value="fifa.csv",
+                            value="fish.csv",
                             clearable=False,
                         ),
                     ]
@@ -56,15 +41,17 @@ layout = html.Div(
                         "align-items": "center",
                         "text-align": "center",
                         "padding-top": "1rem",
+                        "margin-bottom": ".5rem"
+
                     },
                     children=[
                         html.Span(
                             style={"flex": "1"},
                             children=[
                                 html.Div("X variable",
-                                         className="menu-title"),
+                                         ),
                                 dcc.Dropdown(
-                                    id="x-variable-selector",
+                                    id="x-var-dropdown-choice",
                                     options=datasetList,
                                     clearable=False,
                                     searchable=True,
@@ -75,9 +62,9 @@ layout = html.Div(
                             style={"flex": "1"},
                             children=[
                                 html.Div("Y variable",
-                                         className="menu-title"),
+                                         ),
                                 dcc.Dropdown(
-                                    id="y-variable-selector",
+                                    id="y-var-dropdown-choice",
                                     options=datasetList,
                                     clearable=False,
                                     searchable=True,
@@ -91,75 +78,11 @@ layout = html.Div(
                         dbc.Checklist(
                             options=[
                                 {
-                                    "label": "Customize Labels",
-                                    "value": "show_label_inputs_sg",
-                                }
-                            ],
-                            id="toggle_header_provided",
-                            inline=True,
-                            switch=True,
-                        ),
-                        html.Br(),
-                    ],
-                    className="padded-container",
-                ),
-
-                html.Div(
-                    children=[
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    dbc.InputGroup(
-                                        [
-                                            dbc.InputGroupText("x-axis label"),
-                                            dbc.Input(
-                                                id="x_axis_label_sg",
-                                                type="text",
-                                                placeholder="Enter x-axis label",
-                                            ),
-                                        ],
-                                        className="mb-3",
-                                    ),
-                                    width=6,
-                                    style={"display": "inline-block"},
-                                ),
-                                dbc.Col(
-                                    dbc.InputGroup(
-                                        [
-                                            dbc.InputGroupText("y-axis label"),
-                                            dbc.Input(
-                                                id="y_axis_label_sg",
-                                                type="text",
-                                                placeholder="Enter y-axis label",
-                                            ),
-                                        ],
-                                        className="mb-3",
-                                    ),
-                                    width=6,
-                                    style={"display": "inline-block"},
-                                ),
-                            ],
-                            id="show_label_inputs_sg",
-                        ),
-                    ],
-                    style={
-                        "padding-right": "25px",
-                        "padding-left": "25px",
-                    },
-                ),
-
-
-
-                html.Div(
-                    children=[
-                        dbc.Checklist(
-                            options=[
-                                {
                                     "label": "Specify initial weight and bias",
                                     "value": "show_init_w_b_sg",
                                 }
                             ],
-                            id="toggle_init",
+                            id="toggle_init_sg",
                             inline=True,
                             switch=True,
                         ),
@@ -167,41 +90,40 @@ layout = html.Div(
 
                         html.Div(
                             children=[
-                                dbc.Row(
-                                    [
-                                        dbc.Col(
-                                            dbc.InputGroup(
-                                                [
-                                                    dbc.InputGroupText(
-                                                        "Enter initial weight"
-                                                    ),
-                                                    dbc.Input(
-                                                        id="init_w_sg",
-                                                        type="text",
-                                                        placeholder="0",
-                                                    ),
-                                                ],
-                                                className="mb-3",
-                                            ),
-                                            width=6,
+                                dbc.Row(style={"margin-bottom": ".5rem"}, children=[
+                                    dbc.Col(
+                                        dbc.InputGroup(
+                                            [
+                                                dbc.InputGroupText(
+                                                    "Enter initial weight"
+                                                ),
+                                                dbc.Input(
+                                                    id="init_w_sg",
+                                                    type="text",
+                                                    placeholder="0",
+                                                ),
+                                            ],
+                                            className="mb-3",
                                         ),
-                                        dbc.Col(
-                                            dbc.InputGroup(
-                                                [
-                                                    dbc.InputGroupText(
-                                                        "Enter initial bias"
-                                                    ),
-                                                    dbc.Input(
-                                                        id="init_b_sg",
-                                                        type="text",
-                                                        placeholder="0",
-                                                    ),
-                                                ],
-                                                className="mb-3",
-                                            ),
-                                            width=6,
+                                        width=6,
+                                    ),
+                                    dbc.Col(
+                                        dbc.InputGroup(
+                                            [
+                                                dbc.InputGroupText(
+                                                    "Enter initial bias"
+                                                ),
+                                                dbc.Input(
+                                                    id="init_b_sg",
+                                                    type="text",
+                                                    placeholder="0",
+                                                ),
+                                            ],
+                                            className="mb-3",
                                         ),
-                                    ],
+                                        width=6,
+                                    ),
+                                ],
                                     className="padded-container",
                                 ),
                             ],                     id="show_init_w_b_sg",
@@ -222,7 +144,7 @@ layout = html.Div(
                             [
                                 dbc.InputGroupText("Learning Rate"),
                                 dbc.Input(
-                                    id="learning_rate",
+                                    id="learning_rate_sg",
                                     type="number",
                                     value=0.002,
                                     step=0.001,
@@ -234,7 +156,7 @@ layout = html.Div(
                             [
                                 dbc.InputGroupText("Iteration Amount"),
                                 dbc.Input(
-                                    id="iteration_amount",
+                                    id="iteration_amount_sg",
                                     type="number",
                                     value=100,
                                     min=1,
@@ -271,8 +193,8 @@ layout = html.Div(
                                     "layout": {
                                         "title": {
                                             "text": "Relationship between X and Y",
-                                            "x": 0.1,
-                                            "xanchor": "left",
+                                            "x": 0.5,
+                                            "xanchor": "center",
                                         },
                                         "xaxis": {"fixedrange": True},
                                         "yaxis": {
@@ -296,8 +218,7 @@ layout = html.Div(
                             dbc.Row(
                                 id='stats-container',
                                 children=[
-                                    html.H4("Statistics", style={
-                                            "font-weight": "bold"}),
+                                    html.H4("Results"),
                                     html.Div("Equation of line", style={
                                              "font-weight": "bold"}),
                                     dbc.Row(
@@ -368,8 +289,8 @@ layout = html.Div(
                                                     "layout": {
                                                         "title": {
                                                             "text": "Cost over iterations",
-                                                            "x": 0.1,
-                                                            "xanchor": "left",
+                                                            "x": 0.5,
+                                                            "xanchor": "center",
                                                         },
                                                         "xaxis": {"fixedrange": True},
                                                         "yaxis": {
@@ -391,41 +312,43 @@ layout = html.Div(
 )
 
 
-@ callback(
+@callback(
     [Output("show_label_inputs_sg", "className"),
-     Output("x_axis_label_sg", "value"),
-     Output("y_axis_label_sg", "value")],
-    [Input("toggle_header_provided", "value"),
-     Input("x-variable-selector", "value"),
-     Input("y-variable-selector", "value")
+     ],
+    [Input("toggle_header_provided_sg", "value"),
+     Input("x-var-dropdown-choice", "value"),
+     Input("y-var-dropdown-choice", "value")
      ],
 )
 def show_label_name_inputs(toggle_value, x_axis_label, y_axis_label):
     x_var = x_axis_label.replace("_", " ").title()
     y_var = y_axis_label.replace("_", " ").title()
     if toggle_value:
-        return "padded-container", x_var, y_var
+        return "padded-container"
     else:
-        return "hidden",  x_var, y_var
+        return "hidden"
 
 
-@ callback(
+@callback(
     [Output("show_init_w_b_sg", "className"),
      Output("init_w_sg", "value"),
      Output("init_b_sg", "value")],
-    [Input("toggle_init", "value")],
+    [Input("toggle_init_sg", "value")],
     [State("init_w_sg", "value"),
      State("init_b_sg", "value")]
 )
 def show_init_w_b_sg(toggle_value, init_w_sg, init_b_sg):
-    if toggle_value and init_w_sg and init_b_sg:
+    # if toggle_value is None or init_b_sg is None or init_w_sg is None:
+    #     raise exceptions.PreventUpdate
+    # print(toggle_value, init_w_sg, init_b_sg)
+    if toggle_value:
         return "padded-container", init_w_sg, init_b_sg
     else:
         return "hidden", float(0), float(0)
 
 
-@ callback(
-    Output("x-variable-selector", "options"),
+@callback(
+    Output("x-var-dropdown-choice", "options"),
     [Input("input-filter", "value")],
 )
 def set_output_options(filename):
@@ -439,8 +362,8 @@ def set_output_options(filename):
     return options
 
 
-@ callback(
-    Output("y-variable-selector", "options"),
+@callback(
+    Output("y-var-dropdown-choice", "options"),
     [Input("input-filter", "value")],
 )
 def set_output_options(input_value):
@@ -456,9 +379,9 @@ def set_output_options(input_value):
 
 
 # If no options have been selected for the dropdown menu, select any two options at random
-@ callback(
-    Output("x-variable-selector", "value"),
-    [Input("x-variable-selector", "options")],
+@callback(
+    Output("x-var-dropdown-choice", "value"),
+    [Input("x-var-dropdown-choice", "options")],
 )
 def set_output_value(available_options):
     if available_options:
@@ -467,9 +390,9 @@ def set_output_value(available_options):
         return None
 
 
-@ callback(
-    Output("y-variable-selector", "value"),
-    [Input("y-variable-selector", "options")],
+@callback(
+    Output("y-var-dropdown-choice", "value"),
+    [Input("y-var-dropdown-choice", "options")],
 )
 def set_output_value(available_options):
     if available_options:
@@ -478,7 +401,7 @@ def set_output_value(available_options):
         return None
 
 
-@ callback(
+@callback(
     [
         Output("regression-graph_sg", "figure"),
         Output("cost-graph_sg", "figure"),
@@ -486,22 +409,22 @@ def set_output_value(available_options):
         Output('weight_sg', 'children'),
         Output('bias_sg', 'children'),
         Output('equation_sg', 'children'),
-        Output('x_axis_label_sg', 'children'),
-        Output('y_axis_label_sg', 'children')
+        # Output('x_axis_label_sg', 'children'),
+        # Output('y_axis_label_sg', 'children')
 
     ],
     [
         Input("input-filter", "value"),
-        Input("x-variable-selector", "value"),
-        Input("y-variable-selector", "value"),
-        Input("iteration_amount", "value"),
-        Input("learning_rate", "value"),
+        Input("x-var-dropdown-choice", "value"),
+        Input("y-var-dropdown-choice", "value"),
+        Input("iteration_amount_sg", "value"),
+        Input("learning_rate_sg", "value"),
         Input("init_w_sg", "value"),
         Input("init_b_sg", "value")
     ],
 )
 def create_graphs(
-    input_value, x_var, y_var, iteration_amount, learning_rate, init_w_sg, init_b_sg
+    input_value, x_var, y_var, iteration_amount_sg, learning_rate_sg, init_w_sg, init_b_sg
 ):
     df = pd.read_csv("datasets/" + input_value)
     x_column = df[x_var]
@@ -509,9 +432,6 @@ def create_graphs(
     x_var = x_var.replace("_", " ").title()
     y_var = y_var.replace("_", " ").title()
     df = pd.read_csv("datasets/" + input_value)
-
-    # remove nan values and the corresponding y values
-    import numpy as np
 
     x_column = x_column[~np.isnan(x_column)]
     y_column = y_column[~np.isnan(y_column)]
@@ -523,14 +443,15 @@ def create_graphs(
     try:
         init_b_sg = float(init_b_sg) if init_b_sg else float(0)
         init_w_sg = float(init_w_sg) if init_w_sg else float(0)
-        learning_rate = float(learning_rate) if learning_rate else float(0.001)
-        iteration_amount = int(
-            iteration_amount) if iteration_amount else int(100)
+        learning_rate_sg = float(
+            learning_rate_sg) if learning_rate_sg else float(0.001)
+        iteration_amount_sg = int(
+            iteration_amount_sg) if iteration_amount_sg else int(100)
     except Exception as e:
         print(e)
 
     _, _, cost, w, b = gradient_descent_returns_weights_and_biases(
-        x_column, y_column, init_w=init_w_sg, init_b=init_b_sg, alpha=learning_rate, iters=iteration_amount)
+        x_column, y_column, init_w=init_w_sg, init_b=init_b_sg, alpha=learning_rate_sg, iters=iteration_amount_sg)
 
     regression_fig = go.Figure()
     # trace for points
@@ -578,7 +499,7 @@ def create_graphs(
     )
 
     cost_fig.add_trace(go.Scatter(
-        x=list(range(1, iteration_amount+1)), y=cost, mode='lines', name='Cost'))
+        x=list(range(1, iteration_amount_sg+1)), y=cost, mode='lines', name='Cost'))
 
     w_rounded = round(w, 3)
     b_rounded = round(b, 3)
@@ -591,7 +512,7 @@ def create_graphs(
         html.Div(children=b),
         html.Div(children=[dcc.Markdown(
             f"y = **{w_rounded}**x + **{b_rounded}**")]),
-        html.Div(children=x_var),
-        html.Div(children=y_var)
+        # html.Div(children=x_var),
+        # html.Div(children=y_var)
 
     ]

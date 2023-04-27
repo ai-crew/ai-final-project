@@ -1,5 +1,4 @@
-from dash import html, dcc, callback, Input, Output
-from dash.dependencies import Input, Output, State
+from dash import html, dcc, callback, Input, Output, State, exceptions, register_page
 import pandas as pd
 import base64
 import io
@@ -9,6 +8,7 @@ import dash_bootstrap_components as dbc
 import numpy as np
 
 #  TODO: remove stuff in parentheses for toggle ON...after determining if file has header and displaying it
+# register_page(__name__)
 
 layout = html.Div(
     children=[
@@ -299,8 +299,8 @@ layout = html.Div(
                                                     "layout": {
                                                         "title": {
                                                             "text": "Cost over iterations",
-                                                            "x": 0.1,
-                                                            "xanchor": "left",
+                                                            "x": 0.5,
+                                                            "xanchor": "center",
                                                         },
                                                         "xaxis": {"fixedrange": True},
                                                         "yaxis": {
@@ -379,8 +379,8 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
             html.Div(
                 children=[
 
-                    html.H4("Statistics", style={
-                            "font-weight": "bold", "opacity": 0}),
+                    html.H4("Results", style={
+                        "opacity": 0}),
                     html.Div("Equation of line", style={
                         "font-weight": "bold", "opacity": 0}),
                     dbc.Row(
@@ -392,17 +392,7 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
                         ],
                         className="stats"
                     ),
-                    # html.Div("Slope", style={
-                    #     "font-weight": "bold", "opacity": 0}),
-                    # dbc.Row(
-                    #     children=[
-                    #         dbc.Col(html.Div(id="slope"),
-                    #                 style={"opacity": 0}),
-                    #         dbc.Col(dcc.Clipboard(target_id="slope"), width=2,
-                    #                 style={"color": "deepskyblue", "opacity": 0})
-                    #     ],
-                    #     className="stats"
-                    # ),
+
                     html.Div("Weight", style={
                         "font-weight": "bold", "opacity": 0}),
                     dbc.Row(
@@ -467,7 +457,7 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
     return stats_html if list_of_contents is not None else overlay
 
 
-@ callback(
+@callback(
     [Output("show_label_inputs", "className"),
      Output("x-axis-label", "value"),
      Output("y-axis-label", "value")],
@@ -476,13 +466,15 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
      State("y-axis-label", "value")]
 )
 def show_label_name_inputs(toggle_value, x_axis_label, y_axis_label):
+    if not toggle_value:
+        exceptions.PreventUpdate()
     if toggle_value:
         return "padded-container", x_axis_label, y_axis_label
     else:
         return "hidden", "X", "Y"
 
 
-@ callback(
+@callback(
     [Output("show_init_w_b", "className"),
      Output("init_w", "value"),
      Output("init_b", "value")],
@@ -518,10 +510,10 @@ def parse_contents(contents, filename, date):
         return None
 
 
-@ callback(Output('file-status-info', 'children'),
-           Input('upload-data-component', 'contents'),
-           State('upload-data-component', 'filename'),
-           State('upload-data-component', 'last_modified'))
+@callback(Output('file-status-info', 'children'),
+          Input('upload-data-component', 'contents'),
+          State('upload-data-component', 'filename'),
+          State('upload-data-component', 'last_modified'))
 def update_output(list_of_contents, list_of_names, list_of_dates):
 
     if list_of_contents is not None:
@@ -546,7 +538,7 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         return html.Div("No data", style={'color': 'grey'})
 
 
-@ callback(
+@callback(
     [Output("regression-graph", "figure"),
      Output("cost-graph", "figure"),
      Output('cost', 'children'),

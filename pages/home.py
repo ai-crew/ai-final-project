@@ -1,5 +1,8 @@
 from dash import dcc
 from dash import html
+from dash import register_page
+
+# register_page(__name__, path='/')
 
 layout = html.Div(
     [
@@ -28,13 +31,12 @@ layout = html.Div(
                     href="/uploadDataset",
                 ),
                 dcc.Link(
-                    html.Button(
-                        [
-                            html.Div("Select sample dataset", style={
-                                     'font-size': '24px', 'font-weight': 'bold'}),  # Make the text larger and bold
-                            html.I(className="fas fa-database fa-5x", style={
-                                   'color': 'deepskyblue', 'stroke': 'black', 'stroke-width': '1px', 'padding': '15px'}),  # Make the icon larger
-                        ],
+                    html.Button(children=[
+                        html.Div("Select sample dataset", style={
+                            'font-size': '24px', 'font-weight': 'bold'}),  # Make the text larger and bold
+                        html.I(className="fas fa-database fa-5x", style={
+                            'color': 'deepskyblue', 'stroke': 'black', 'stroke-width': '1px', 'padding': '15px'}),  # Make the icon larger
+                    ],
                         id="sample-button",
                         n_clicks=0,
                         style={
@@ -44,7 +46,7 @@ layout = html.Div(
                             'background-color': 'white',
                             'text-align': 'center',
                             'margin': '1rem',
-                        },
+                    },
                     ),
                     href="/sampleDataset",
                 ),
