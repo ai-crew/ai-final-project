@@ -94,8 +94,15 @@ layout = html.Div(
                             ]),
                             dbc.ModalBody([
                                 html.P("Add points to the dataset"),
+                                html.Div(id="modal-error-not-enough-points"),
 
                                 html.Div(id="input-fields-container", children=[
+                                    html.Div([
+                                        dbc.Input(id={"type": "point-input-x", "index": 0},
+                                                  type="number", style={"width": "50%"}),
+                                        dbc.Input(id={"type": "point-input-y", "index": 0},
+                                                  type="number", style={"width": "50%"}),
+                                    ], style={"display": "flex", "justify-content": "space-around", "margin-bottom": "10px"}),
                                     html.Div([
                                         dbc.Input(id={"type": "point-input-x", "index": 0},
                                                   type="number", style={"width": "50%"}),
@@ -278,7 +285,7 @@ layout = html.Div(
                                     type="number",
                                     value=100,
                                     min=1,
-                                    max=500,
+                                    max=1000,
                                 ),
                             ],
                             className="mb-3",
@@ -334,7 +341,13 @@ layout = html.Div(
                 dbc.Row(
                     [
                         dbc.Col(children=[
-                            html.Div(id='stats-container'),
+                            html.Div(id='stats-container', children=[
+                                html.Div(id='cost'),
+                                html.Div(id='weight'),
+                                html.Div(id='bias'),
+                                html.Div(id='equation'),
+
+                            ]),
                         ],
                             style={"padding-top": "2rem"}),
                         dbc.Col(
@@ -386,10 +399,14 @@ layout = html.Div(
 @ callback(
     Output('stats-container', 'children'),
     Input('upload-data-component', 'contents'),
+    Input("x-axis-label", "value"),
+    Input("y-axis-label", "value"),
     State('upload-data-component', 'filename'),
-    State('upload-data-component', 'last_modified')
+    State('upload-data-component', 'last_modified'),
+    State("input-fields-container", "children")
+
 )
-def update_stats_container(list_of_contents, list_of_names, list_of_dates):
+def update_stats_container(list_of_contents, list_of_names, list_of_dates, input_fields, x_axis_label, y_axis_label):
     stats_html = dbc.Row(
         id='stats-container',
         children=[
@@ -399,7 +416,7 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
                 children=[
                     dbc.Col(html.Div(id="equation")),
                     dbc.Col(dcc.Clipboard(
-                        target_id="equation"), width=2, style={"color": "deepskyblue"})
+                            target_id="equation"), width=2, style={"color": "deepskyblue"})
                 ],
                 className="stats"
             ),
@@ -408,7 +425,7 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
                 children=[
                     dbc.Col(html.Div(id="weight")),
                     dbc.Col(dcc.Clipboard(
-                        target_id="weight"), width=2, style={"color": "deepskyblue"})
+                            target_id="weight"), width=2, style={"color": "deepskyblue"})
                 ],
                 className="stats"
             ),
@@ -417,7 +434,7 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
                 children=[
                     dbc.Col(html.Div(id="bias")),
                     dbc.Col(dcc.Clipboard(
-                        target_id="bias"), width=2, style={"color": "deepskyblue"})
+                            target_id="bias"), width=2, style={"color": "deepskyblue"})
                 ],
                 className="stats"
             ),
@@ -426,7 +443,7 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
                 children=[
                     dbc.Col(html.Div(id="cost")),
                     dbc.Col(dcc.Clipboard(
-                        target_id="cost"), width=2, style={"color": "deepskyblue"})
+                            target_id="cost"), width=2, style={"color": "deepskyblue"})
                 ],
                 className="stats"
             ),
@@ -434,7 +451,24 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
         align="top",
         className="flex-stats-container",
     )
-    overlay = dbc.Row(
+
+    if list_of_contents is not None:
+        return stats_html
+
+    elif input_fields is not None:
+        for input_field in input_fields:
+            try:
+                x = input_field['props']['children'][0]['props']['value']
+                y = input_field['props']['children'][1]['props']['value']
+                added_points = pd.concat([added_points, pd.DataFrame(
+                    [[x, y]], columns=[x_axis_label, y_axis_label])])
+            except:
+                continue
+        #  check if there's at least 3 points (can't be empty)
+        if len(added_points) >= 3:
+            return stats_html
+
+    return dbc.Row(
 
         children=[
             html.Div(
@@ -503,7 +537,7 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
                             "padding": "1rem"
                         },
                         children=[
-                            html.Div("Please upload a file to view results",
+                            html.Div("Please upload a file or add points to view results",
                                      className="stats-overlay")
                         ]
                     )
@@ -515,20 +549,23 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
         className="flex-stats-container",
     )
 
-    return stats_html if list_of_contents is not None else overlay
-
 
 @callback(
     [Output("input-fields-container", "children"),
-     Output("modal", "is_open")],
+     Output("modal", "is_open"),
+     Output("modal-error-not-enough-points", "children")],  # todo: fix
     [Input("add-more-points", "n_clicks"),
      Input("add-point-modal-open-btn", "n_clicks"),
      Input("add-point-btn", "n_clicks"),
+     Input("x-axis-label", "value"),
+     Input("y-axis-label", "value"),
      ],
     [State("input-fields-container", "children"),
-     State("modal", "is_open")],
+     State("modal", "is_open"),
+     State("input-fields-container", "children")
+     ],
 )
-def toggle_modal_and_add_input_fields(add_more_points_n_clicks, add_point_n_clicks, add_point_btn_n_clicks, children, is_open):
+def toggle_modal_and_add_input_fields(add_more_points_n_clicks, add_point_n_clicks, add_point_btn_n_clicks, x_axis_label, y_axis_label, children, is_open, input_fields):
     ctx = callback_context
     triggered_id, triggered_prop = ctx.triggered[0]['prop_id'].split('.')
 
@@ -542,14 +579,29 @@ def toggle_modal_and_add_input_fields(add_more_points_n_clicks, add_point_n_clic
                           type="number", style={"width": "50%"}),
             ], style={"display": "flex", "justify-content": "space-around", "margin-bottom": "10px"})
             children.append(new_input)
-        return children, no_update
+        return children, no_update, html.Div()
 
     elif triggered_id == 'add-point-modal-open-btn':
         if add_point_n_clicks:
-            return no_update, not is_open
-        return no_update, is_open
+            return no_update, not is_open, html.Div()
+        return no_update, is_open, False
     elif triggered_id == 'add-point-modal-open-btn' or triggered_id == 'add-point-btn':
-        return no_update, not is_open
+        added_points = pd.DataFrame(columns=[x_axis_label, y_axis_label])
+        for input_field in input_fields:
+            try:
+                x = input_field['props']['children'][0]['props']['value']
+                y = input_field['props']['children'][1]['props']['value']
+                added_points = pd.concat([added_points, pd.DataFrame(
+                    [[x, y]], columns=[x_axis_label, y_axis_label])])
+            except:
+                continue
+        #  check if there's at least 3 points (can't be empty)
+        print(added_points)
+        if len(added_points) < 3:
+            return no_update, is_open, html.Div(children="Error: You need at least 3 points to fit a line.", style={"color": "red",
+                                                                                                                    "padding": "8px 0"})
+
+        return no_update, not is_open, html.Div()
 
     else:
         raise exceptions.PreventUpdate
@@ -588,6 +640,8 @@ def show_init_w_b(toggle_value, init_w, init_b):
 
 
 def parse_contents(contents, filename, date):
+    if filename is None or contents is None:
+        return None
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
     try:
@@ -611,7 +665,6 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
     if list_of_contents is not None:
         dataframes = [
             parse_contents(list_of_contents, list_of_names, list_of_dates)]
-        print(dataframes)
 
         if not dataframes or dataframes[0] is None:
             return html.Div("Error. Please check that file type and/or format is valid.", style={'color': 'red'})
@@ -686,55 +739,45 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
         ]
     )
 
-    uploaded_points = []
-    added_points = pd.DataFrame()
+    df_uploaded = pd.DataFrame()
+    df_added_points = pd.DataFrame()
 
+    dataframes = parse_contents(
+        list_of_contents, list_of_names, list_of_dates)
+
+    # file uploaded is good
+    if dataframes is not None:
+        if len(dataframes) > 0 and dataframes[0].shape[1] == 2:
+            df_uploaded = dataframes[0]
+            df_uploaded.columns = [x_axis_label, y_axis_label]
     if submit_points is not None:
         for input_field in input_fields_children:
             try:
                 x = input_field['props']['children'][0]['props']['value']
                 y = input_field['props']['children'][1]['props']['value']
-                added_points = pd.concat([added_points, pd.DataFrame(
+                df_added_points = pd.concat([df_added_points, pd.DataFrame(
                     [[x, y]], columns=[x_axis_label, y_axis_label])])
             except:
                 continue
-    children = []
-    if list_of_contents is not None:
-        children = [
-            parse_contents(c, n, d) for c, n, d in
-            zip([list_of_contents], [list_of_names], [list_of_dates])]
+    # merge uploaded and added points
+    df = pd.concat([df_uploaded, df_added_points])
 
-    if len(children) == 0 and added_points.empty:
+    if len(df.columns) != 2:
         return [
             regression_fig,
             cost_fig,
             html.Div(children=0),
             html.Div(children=0),
             html.Div(children=0),
-            html.Div(children=0)]
-    elif len(children) > 0 and len(children[0]) > 0 and children[0].shape[1] != 2 and added_points.empty:
-        return [
-            regression_fig,
-            cost_fig,
-            html.Div(children=0),
-            html.Div(children=0),
-            html.Div(children=0),
-            html.Div(children=0)]
+            html.Div(children=0)
+        ]
     else:
-        if added_points.empty and (children is None or children == []):
-            raise exceptions.PreventUpdate
-        elif not added_points.empty and children == [] or children is None or children[0] == []:
-            df = pd.DataFrame(added_points)
-        elif not added_points.empty and children[0] is not None:
-            df = pd.concat([children[0], added_points])
-
-        else:
-            pass
-            # or pd.DataFrame(added_points)
+        # continue with regression and cost calculations
 
         init_b = float(init_b) if init_b else float(0)
         init_w = float(init_w) if init_w else float(0)
-        learning_rate = float(learning_rate) if learning_rate else float(0.001)
+        learning_rate = float(
+            learning_rate) if learning_rate else float(0.001)
         iteration_amount = int(
             iteration_amount) if iteration_amount else int(100)
 
