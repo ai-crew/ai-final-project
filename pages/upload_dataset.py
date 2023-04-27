@@ -64,6 +64,55 @@ layout = html.Div(
                     ],
                     className="padded-container",
                 ),
+                html.Div (
+                    children=[
+                        html.Button(
+                            className="button-container",
+                            children=[
+                                html.A(
+                                    "Add Point",
+                                    className="download-link",
+                                ),
+                                html.I(
+                                    className="fas fa-plus fa icon",
+                                ),
+                            ],
+                            id="add-point-modal-open-btn"
+                        ),
+                        dbc.Modal(
+                            [
+                                dbc.ModalHeader(dbc.ModalTitle("Add Point")),
+                                dbc.ModalBody(
+                                    children=[
+                                        html.P("Add a point to the dataset"),
+                                        dbc.InputGroup(
+                                            [
+                                                dbc.InputGroupText("X Value"),
+                                                dbc.Input(id="x-input", type="number"),
+                                            ],
+                                            className="mb-3",
+                                        ),
+                                        dbc.InputGroup(
+                                            [
+                                                dbc.InputGroupText("Y Value"),
+                                                dbc.Input(id="y-input", type="number"),
+                                            ],
+                                            className="mb-3",
+                                        ),
+                                    ]
+                                ),
+                                dbc.ModalFooter(
+                                    dbc.Button(
+                                        "Add", id="add-point-btn", className="ms-auto", n_clicks=0
+                                    )
+                                ),
+                            ],
+                            id="modal",
+                            is_open=False,
+                        )
+                    ],
+                    className="padded-container mb-3",
+                ),
 
                 html.Div(
                     children=[
@@ -683,3 +732,13 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
             html.Div(children=[dcc.Markdown(
                 f"y = **{w_rounded}**x + **{b_rounded}**")])
         ]
+    
+@ callback(
+    Output("modal", "is_open"),
+    [Input("add-point-modal-open-btn", "n_clicks"), Input("add-point-btn", "n_clicks")],
+    [State("modal", "is_open")],
+)
+def toggle_modal(n1, n2, is_open):
+    if n1 or n2:
+        return not is_open
+    return is_open
