@@ -98,11 +98,11 @@ def gradient_descent(x, y, alpha, iters, init_w=0, init_b=0):
 
 
 def gradient_descent_returns_weights_and_biases(x, y, alpha=0.001, iters=100, init_w=0, init_b=0):
-    print(x)
-    print(y)
     w = init_w
     b = init_b
     m = len(x)
+    x = x.astype(np.float64)
+    y = y.astype(np.float64)
     cost_vals = []
     for i in range(iters):
         dw = 0.0
