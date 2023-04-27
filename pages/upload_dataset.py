@@ -1,4 +1,4 @@
-from dash import html, dcc, callback, Input, Output, State, exceptions, register_page
+from dash import html, dcc, callback, Input, Output, State, exceptions, register_page, callback_context
 import pandas as pd
 import base64
 import io
@@ -6,10 +6,11 @@ import plotly.graph_objs as go
 from linear_regression import gradient_descent_returns_weights_and_biases
 import dash_bootstrap_components as dbc
 import numpy as np
-
+import uuid
 #  TODO: remove stuff in parentheses for toggle ON...after determining if file has header and displaying it
 
 layout = html.Div(
+
     children=[
         html.Div(
             children=[
@@ -366,6 +367,34 @@ layout = html.Div(
                 ),
             ],
         ),
+        html.Div([
+            dbc.Modal([
+                dbc.ModalHeader([
+                    html.H4("Add Points", className="modal-title",
+                            style={"text-align": "center"}),
+                    html.I(className="fas fa-times", id="close-add-points-modal",
+                           style={"cursor": "pointer"}),
+                ]),
+                dbc.ModalBody([
+                    html.Div(id="input-fields-container", children=[
+                        html.Div([
+                            dbc.Input(id={"type": "point-input-x",
+                                          "index": 0}, type="number"),
+                            dbc.Input(id={"type": "point-input-y",
+                                          "index": 0}, type="number")
+                        ], style={"display": "flex", "justify-content": "space-around"})
+                    ], style={"overflow-y": "auto", "max-height": "400px"}),
+                    html.Div([
+                        html.I(className="fas fa-plus-square"),
+                        html.Span(" Add more points", style={
+                                  "cursor": "pointer"})
+                    ], id="add-more-points", style={"display": "flex", "align-items": "center", "cursor": "pointer"})
+                ]),
+                dbc.ModalFooter([
+                    dbc.Button("OK", id="submit-points", color="primary")
+                ])
+            ], id="add-points-modal", is_open=False)
+        ], style={"position": "relative"}),
     ]
 )
 
@@ -506,6 +535,36 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
 
 
 @callback(
+    Output("add-points-modal", "is_open"),
+    [Input("add-points-button", "n_clicks"),
+     Input("close-add-points-modal", "n_clicks")],
+    [State("add-points-modal", "is_open")],
+)
+def toggle_modal(add_points_n_clicks, close_modal_n_clicks, is_open):
+    if add_points_n_clicks or close_modal_n_clicks:
+        return not is_open
+    return is_open
+
+
+@callback(
+    Output("input-fields-container", "children"),
+    [Input("add-more-points", "n_clicks")],
+    [State("input-fields-container", "children")]
+)
+def add_more_input_fields(n_clicks, children):
+    if n_clicks:
+        new_index = str(uuid.uuid4())
+        new_input = html.Div([
+            dbc.Input(id={"type": "point-input-x",
+                      "index": new_index}, type="number"),
+            dbc.Input(id={"type": "point-input-y",
+                      "index": new_index}, type="number")
+        ], style={"display": "flex", "justify-content": "space-around"})
+        children.append(new_input)
+    return children
+
+
+@callback(
     [Output("show_label_inputs", "className"),
      Output("x-axis-label", "value"),
      Output("y-axis-label", "value")],
@@ -597,8 +656,26 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
     Input("learning_rate", "value"),
     Input("iteration_amount", "value"),
     Input("init_w", "value"),
-    Input("init_b", "value"))
-def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y_axis_label, learning_rate, iteration_amount, init_w, init_b):
+    Input("init_b", "value"),
+    Input("submit-points", "n_clicks"),
+    State("input-fields-container", "children"))
+def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y_axis_label, learning_rate, iteration_amount, init_w, init_b, submit_points, input_fields_children):
+    added_points = []
+    if submit_points is not None:
+        # Parse points added in modal if there's any
+
+        for child in input_fields_children:
+            x_input = child.children[0]
+            y_input = child.children[1]
+            point_id_x = x_input.id["index"]
+            point_id_y = y_input.id["index"]
+
+            x_value = callback_context.states[f"{{'type': 'point-input-x', 'index': '{point_id_x}'}}.value"]
+            y_value = callback_context.states[f"{{'type': 'point-input-y', 'index': '{point_id_y}'}}.value"]
+
+            if x_value is not None and y_value is not None:
+                added_points.append((x_value, y_value))
+
     regression_fig = go.Figure()
     cost_fig = go.Figure()
 
@@ -640,7 +717,7 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
             parse_contents(c, n, d) for c, n, d in
             zip([list_of_contents], [list_of_names], [list_of_dates])]
 
-    if len(children) == 0:
+    if len(children) == 0 and not added_points:
         return [
             regression_fig,
             cost_fig,
@@ -648,7 +725,7 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
             html.Div(children=0),
             html.Div(children=0),
             html.Div(children=0)]
-    elif len(children[0]) > 0 and children[0].shape[1] != 2:
+    elif len(children[0]) > 0 and children[0].shape[1] != 2 and not added_points:
         return [
             regression_fig,
             cost_fig,
@@ -658,6 +735,10 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
             html.Div(children=0)]
     else:
         df = children[0]
+        if added_points:
+            df = df.append(pd.DataFrame(
+                added_points, columns=df.columns), ignore_index=True)
+
         init_b = float(init_b) if init_b else float(0)
         init_w = float(init_w) if init_w else float(0)
         learning_rate = float(learning_rate) if learning_rate else float(0.001)
