@@ -4,7 +4,7 @@ from dash import dcc
 from dash import html
 import pandas as pd
 from pages import home, sample_dataset, upload_dataset
-
+import flask
 from dash.dependencies import Input, Output
 
 app = dash.Dash(
@@ -24,6 +24,21 @@ app.layout = html.Div([
              style={'margin': '5rem'}, children=[]),
 ]
 )
+
+
+@app.server.route('/download_csv/')
+def download_csv():
+    try:
+        return flask.send_from_directory(
+            directory='datasets',
+            path='sample.csv',
+            mimetype='text/csv',
+            download_name='sample.csv',
+            as_attachment=True,
+        )
+    except Exception as e:
+        print(str(e))
+        return flask.abort(404)
 
 
 @app.callback(Output('page-content', 'children'),

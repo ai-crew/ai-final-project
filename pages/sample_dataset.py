@@ -368,7 +368,6 @@ def set_output_options(filename):
 )
 def set_output_options(input_value):
     df = pd.read_csv("datasets/" + input_value)
-
     options = []
     for col in df.columns:
         if df[col].dtype == "int64" or df[col].dtype == "float64":
@@ -431,11 +430,9 @@ def create_graphs(
     y_column = df[y_var]
     x_var = x_var.replace("_", " ").title()
     y_var = y_var.replace("_", " ").title()
-    df = pd.read_csv("datasets/" + input_value)
 
     x_column = x_column[~np.isnan(x_column)]
     y_column = y_column[~np.isnan(y_column)]
-    # Fix the columns so they are the same length
     if len(x_column) > len(y_column):
         x_column = x_column[: len(y_column)]
     elif len(y_column) > len(x_column):

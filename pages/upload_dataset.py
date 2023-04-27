@@ -8,7 +8,6 @@ import dash_bootstrap_components as dbc
 import numpy as np
 
 #  TODO: remove stuff in parentheses for toggle ON...after determining if file has header and displaying it
-# register_page(__name__)
 
 layout = html.Div(
     children=[
@@ -45,7 +44,7 @@ layout = html.Div(
                                 ),
                             ],
                         ),
-                        html.Div("Upload .csv file"),
+                        html.Div("Upload .csv/.xslx file"),
                         dcc.Upload(
                             id="upload-data-component",
                             multiple=False,
@@ -332,7 +331,7 @@ def update_stats_container(list_of_contents, list_of_names, list_of_dates):
     stats_html = dbc.Row(
         id='stats-container',
         children=[
-            html.H4("Statistics", style={"font-weight": "bold"}),
+            html.H4("Results"),
             html.Div("Equation of line", style={"font-weight": "bold"}),
             dbc.Row(
                 children=[
@@ -484,22 +483,17 @@ def show_label_name_inputs(toggle_value, x_axis_label, y_axis_label):
 )
 def show_init_w_b(toggle_value, init_w, init_b):
     if toggle_value:
-        return "padded-container", init_w, init_b
+        return "padded-container", float(init_w), float(init_b)
     else:
         return "hidden", float(0), float(0)
 
 
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
-
     decoded = base64.b64decode(content_string)
-    df = pd.DataFrame()
-    x_axis_label = ""
-    y_axis_label = ""
+    print(filename)
     try:
         if 'csv' in filename:
-            # Assume that the user uploaded a CSV file
-            # Check if first row is a header
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), header=None)
             return df
         elif 'xls' in filename:
@@ -518,12 +512,11 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
 
     if list_of_contents is not None:
         dataframes = [
-            parse_contents(c, n, d) for c, n, d in
-            zip([list_of_contents], [list_of_names], [list_of_dates])]
-        # Check if the DataFrame was created successfully
+            parse_contents(list_of_contents, list_of_names, list_of_dates)]
+        print(dataframes)
+
         if not dataframes or dataframes[0] is None:
             return html.Div("Error. Please check that file type and/or format is valid.", style={'color': 'red'})
-
         df = dataframes[0]
 
         if df.shape[1] != 2:
@@ -538,7 +531,7 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         return html.Div("No data", style={'color': 'grey'})
 
 
-@callback(
+@ callback(
     [Output("regression-graph", "figure"),
      Output("cost-graph", "figure"),
      Output('cost', 'children'),
@@ -598,7 +591,15 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
             parse_contents(c, n, d) for c, n, d in
             zip([list_of_contents], [list_of_names], [list_of_dates])]
 
-    if len(children) == 0 or children[0].shape[1] != 2:
+    if len(children) == 0:
+        return [
+            regression_fig,
+            cost_fig,
+            html.Div(children=0),
+            html.Div(children=0),
+            html.Div(children=0),
+            html.Div(children=0)]
+    elif len(children[0]) > 0 and children[0].shape[1] != 2:
         return [
             regression_fig,
             cost_fig,
