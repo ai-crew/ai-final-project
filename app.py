@@ -10,8 +10,6 @@ from dash.dependencies import Input, Output
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
-    meta_tags=[{"name": "viewport",
-                "content": "width=device-width, initial-scale=1"}],
     suppress_callback_exceptions=True,
 )
 
@@ -22,7 +20,7 @@ app.title = "Linear Regression Visualizer"
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content',
-             style={'width': "80%", 'margin': '2rem'}, children=[]),
+             style={'margin': '5rem', "padding": "5rem"}, children=[]),
 ]
 )
 

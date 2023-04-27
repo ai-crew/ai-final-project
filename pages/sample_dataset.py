@@ -19,7 +19,7 @@ layout = html.Div(
 
         html.Div(
             children=[
-                html.H1(children="Explore Sample Datasets",
+                html.H1("Explore Sample Datasets",
                         style={"font-size": "2rem"}),
                 html.Div(
                     html.Span(
@@ -38,7 +38,7 @@ layout = html.Div(
             children=[
                 html.Div(
                     children=[
-                        html.Div(children="Select a Dataset",
+                        html.Div("Select a Dataset",
                                  className="menu-title"),
                         dcc.Dropdown(
                             id="input-filter",
@@ -61,7 +61,7 @@ layout = html.Div(
                         html.Span(
                             style={"flex": "1"},
                             children=[
-                                html.Div(children="X variable",
+                                html.Div("X variable",
                                          className="menu-title"),
                                 dcc.Dropdown(
                                     id="x-variable-selector",
@@ -74,7 +74,7 @@ layout = html.Div(
                         html.Span(
                             style={"flex": "1"},
                             children=[
-                                html.Div(children="Y variable",
+                                html.Div("Y variable",
                                          className="menu-title"),
                                 dcc.Dropdown(
                                     id="y-variable-selector",
@@ -418,8 +418,7 @@ def show_label_name_inputs(toggle_value, x_axis_label, y_axis_label):
      State("init_b_sg", "value")]
 )
 def show_init_w_b_sg(toggle_value, init_w_sg, init_b_sg):
-    print(toggle_value)
-    if toggle_value:
+    if toggle_value and init_w_sg and init_b_sg:
         return "padded-container", init_w_sg, init_b_sg
     else:
         return "hidden", float(0), float(0)
@@ -536,7 +535,7 @@ def create_graphs(
     regression_fig = go.Figure()
     # trace for points
     regression_fig.add_trace(go.Scatter(
-        x=x_column, y=y_column, mode='markers',  name="data",   hovertemplate="X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>",  marker=dict(color='deepskyblue')))
+        x=x_column, y=y_column, mode='markers',  name="data",   hovertemplate="X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>"))
 
     # trace for regression line at any point on the line
     start = min(x_column)

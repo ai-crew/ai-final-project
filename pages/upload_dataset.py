@@ -14,7 +14,7 @@ layout = html.Div(
     children=[
         html.Div(
             children=[
-                html.H1(children="Upload Your Own Dataset To Explore (2-variables)",
+                html.H1("Upload Your Own Dataset To Explore (2-variables)",
                         style={"font-size": "2rem"}),
                 html.Div(
                     html.Span(
@@ -45,7 +45,7 @@ layout = html.Div(
                                 ),
                             ],
                         ),
-                        html.Div(children="Upload .csv file"),
+                        html.Div("Upload .csv file"),
                         dcc.Upload(
                             id="upload-data-component",
                             multiple=False,
@@ -491,7 +491,6 @@ def show_label_name_inputs(toggle_value, x_axis_label, y_axis_label):
      State("init_b", "value")]
 )
 def show_init_w_b(toggle_value, init_w, init_b):
-    print(toggle_value)
     if toggle_value:
         return "padded-container", init_w, init_b
     else:
@@ -526,29 +525,25 @@ def parse_contents(contents, filename, date):
 def update_output(list_of_contents, list_of_names, list_of_dates):
 
     if list_of_contents is not None:
-        print("list_of_contents:", list_of_contents)
-        print("list_of_names:", list_of_names)
-        print("list_of_dates:", list_of_dates)
         dataframes = [
             parse_contents(c, n, d) for c, n, d in
             zip([list_of_contents], [list_of_names], [list_of_dates])]
-        print("dataframes:", dataframes)
         # Check if the DataFrame was created successfully
         if not dataframes or dataframes[0] is None:
-            return html.Div(children="An error occurred while parsing the file.", style={'color': 'red'})
+            return html.Div("Error. Please check that file type and/or format is valid.", style={'color': 'red'})
 
         df = dataframes[0]
 
         if df.shape[1] != 2:
-            return html.Div(children="Invalid file format. Please upload a valid .csv or .xslx file", style={'color': 'red'})
+            return html.Div("Invalid file format for 2D regression. Please upload a valid .csv or .xslx file (see sample.csv)", style={'color': 'red'})
         else:
             return html.Div(children=[
-                html.Div("File uploaded successfully)",
+                html.Div("File uploaded successfully",
                          style={'color': 'green'}),
                 html.Div(f"Filename: {list_of_names}")
             ])
     else:
-        return html.Div(children="No file has been uploaded yet", style={'color': 'grey'})
+        return html.Div("No data", style={'color': 'grey'})
 
 
 @ callback(
@@ -611,15 +606,7 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
             parse_contents(c, n, d) for c, n, d in
             zip([list_of_contents], [list_of_names], [list_of_dates])]
 
-    if len(children) == 0:
-        return [
-            regression_fig,
-            cost_fig,
-            html.Div(children=0),
-            html.Div(children=0),
-            html.Div(children=0),
-            html.Div(children=0)]
-    elif children[0].shape[1] != 2:
+    if len(children) == 0 or children[0].shape[1] != 2:
         return [
             regression_fig,
             cost_fig,
@@ -646,7 +633,7 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
         regression_fig = go.Figure()
         # trace for points
         regression_fig.add_trace(go.Scatter(
-            x=df[0], y=df[1], mode='markers',  name="data",   hovertemplate="X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>",  marker=dict(color='deepskyblue')))
+            x=df[0], y=df[1], mode='markers',  name="data",   hovertemplate="X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>"))
 
         # trace for regression line at any point on the line
         start = min(df[0])
