@@ -665,10 +665,10 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
         # Parse points added in modal if there's any
 
         for child in input_fields_children:
-            x_input = child.children[0]
-            y_input = child.children[1]
-            point_id_x = x_input.id["index"]
-            point_id_y = y_input.id["index"]
+            x_input = child['props']['children'][0]
+            y_input = child['props']['children'][1]
+            point_id_x = x_input['id']["index"]
+            point_id_y = y_input['id']["index"]
 
             x_value = callback_context.states[f"{{'type': 'point-input-x', 'index': '{point_id_x}'}}.value"]
             y_value = callback_context.states[f"{{'type': 'point-input-y', 'index': '{point_id_y}'}}.value"]
