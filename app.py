@@ -17,7 +17,6 @@ server = app.server
 
 app.title = "Linear Regression Visualizer"
 
-
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content',
