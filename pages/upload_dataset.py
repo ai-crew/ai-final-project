@@ -443,7 +443,7 @@ layout = html.Div(
 @callback(
     [Output("input-fields-container", "children"),
      Output("modal", "is_open"),
-     Output("modal-error-not-enough-points", "children")],  # todo: fix
+     Output("modal-error-not-enough-points", "children")],
     [Input("add-more-points", "n_clicks"),
      Input("add-point-modal-open-btn", "n_clicks"),
      Input("add-point-btn", "n_clicks"),
@@ -640,7 +640,6 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
     dataframes = parse_contents(
         list_of_contents, list_of_names, list_of_dates)
 
-    # file uploaded is good
     if dataframes is not None:
         if len(dataframes) > 0 and dataframes.shape[1] == 2:
             dataframes.columns = [x_axis_label, y_axis_label]
@@ -689,12 +688,10 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
         y_axis_label = y_axis_label if y_axis_label else "Y"
 
         regression_fig = go.Figure()
-        # trace for points
         regression_fig.add_trace(go.Scatter(
             x=df[x_axis_label], y=df[y_axis_label], mode='markers', name="data",
             hovertemplate="X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>"))
 
-        # trace for regression line at any point on the line
         start = min(df[x_axis_label])
         end = max(df[x_axis_label])
         range_df = pd.DataFrame(np.arange(start, end, 0.01))
@@ -740,13 +737,14 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
         w_rounded = round(w, 3)
         b_rounded = round(b, 3)
         cost = cost[-1] or 0
+        cost_rounded = round(cost, 3)
 
         return [
             regression_fig,
             cost_fig,
-            html.Div(children=cost),
-            html.Div(children=w),
-            html.Div(children=b),
+            html.Div(children=cost_rounded),
+            html.Div(children=w_rounded),
+            html.Div(children=b_rounded),
             html.Div(children=[dcc.Markdown(
                 f"y = **{w_rounded}**x + **{b_rounded}**")])
         ]

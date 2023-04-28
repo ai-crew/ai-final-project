@@ -121,8 +121,8 @@ layout = html.Div(
                                         width=6,
                                     ),
                                 ],
-                                        className="padded-container",
-                                        ),
+                                    className="padded-container",
+                                ),
                             ], id="show_init_w_b_sg",
                         ),
                         html.Br(),
@@ -368,7 +368,7 @@ def set_output_options(input_value):
     return options
 
 
-# If no options have been selected for the dropdown menu, select any two options at random
+# If no options have been selected for the dropdown menu, select first two
 @callback(
     Output("x-var-dropdown-choice", "value"),
     [Input("x-var-dropdown-choice", "options")],
@@ -393,8 +393,6 @@ def set_output_value(available_options):
         Output('weight_sg', 'children'),
         Output('bias_sg', 'children'),
         Output('equation_sg', 'children'),
-        # Output('x_axis_label_sg', 'children'),
-        # Output('y_axis_label_sg', 'children')
 
     ],
     [
@@ -487,14 +485,15 @@ def create_graphs(
 
     w_rounded = round(w, 3)
     b_rounded = round(b, 3)
+    cost = cost[-1] or 0
+    cost_rounded = round(cost, 3)
 
     return [
         regression_fig,
         cost_fig,
-        html.Div(children=cost[-1]),
-        html.Div(children=w),
-        html.Div(children=b),
+        html.Div(children=cost_rounded),
+        html.Div(children=w_rounded),
+        html.Div(children=b_rounded),
         html.Div(children=[dcc.Markdown(
-            f"y = **{w_rounded}**x + **{b_rounded}**")]),
-
+            f"y = **{w_rounded}**x + **{b_rounded}**")])
     ]
