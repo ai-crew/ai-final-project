@@ -1,8 +1,5 @@
 from dash import dcc
 from dash import html
-from dash import register_page
-
-# register_page(__name__, path='/')
 
 layout = html.Div(
     [
@@ -13,9 +10,9 @@ layout = html.Div(
                     html.Button(
                         [
                             html.Div("Upload your own dataset", style={
-                                     'font-size': '24px', 'font-weight': 'bold'}),  # Make the text larger and bold
+                                'font-size': '24px', 'font-weight': 'bold'}),
                             html.I(className="fas fa-upload fa-5x", style={
-                                   'color': 'deepskyblue', 'stroke': 'black', 'stroke-width': '1px', 'padding': '15px'}),  # Make the icon larger
+                                'color': 'deepskyblue', 'stroke': 'black', 'stroke-width': '1px', 'padding': '15px'}),
                         ],
                         id="upload-button",
                         n_clicks=0,
@@ -33,9 +30,9 @@ layout = html.Div(
                 dcc.Link(
                     html.Button(children=[
                         html.Div("Select sample dataset", style={
-                            'font-size': '24px', 'font-weight': 'bold'}),  # Make the text larger and bold
+                            'font-size': '24px', 'font-weight': 'bold'}),
                         html.I(className="fas fa-database fa-5x", style={
-                            'color': 'deepskyblue', 'stroke': 'black', 'stroke-width': '1px', 'padding': '15px'}),  # Make the icon larger
+                            'color': 'deepskyblue', 'stroke': 'black', 'stroke-width': '1px', 'padding': '15px'}),
                     ],
                         id="sample-button",
                         n_clicks=0,
@@ -46,7 +43,7 @@ layout = html.Div(
                             'background-color': 'white',
                             'text-align': 'center',
                             'margin': '1rem',
-                    },
+                        },
                     ),
                     href="/sampleDataset",
                 ),
@@ -80,8 +77,9 @@ layout.children.append(
                 href="https://github.com/ai-crew/ai-final-project",
                 style={'text-decoration': 'none', 'padding': '1rem'}
             ),
-            html.P("Group Members: Abdullah Yousuf, Ege Seyithanoglu, Ihsan Ahmed, Hussein Mohamed, and Elizabeth Aufzien",
-                   style={'font-size': '12px', 'margin': '0', 'padding': '1rem'}),
+            html.P(
+                "Group Members: Abdullah Yousuf, Ege Seyithanoglu, Ihsan Ahmed, Hussein Mohamed, and Elizabeth Aufzien",
+                style={'font-size': '14px', 'margin': '0', 'padding': '1rem'}),
         ],
         style={
             'display': 'flex',

@@ -81,14 +81,9 @@ layout = html.Div(
                             ],
                             id="add-point-modal-open-btn"
                         ),
-
-
                         dbc.Modal([
                             dbc.ModalHeader([
                                 dbc.ModalTitle("Add Points"),
-                                # html.Button(
-                                #     "Close", id="close-modal", className="btn btn-secondary", style={"margin-left": "auto"}),
-
                             ]),
                             dbc.ModalBody([
                                 html.P("Add points to the dataset"),
@@ -102,9 +97,7 @@ layout = html.Div(
                                                 dbc.Input(id={"type": "point-input-x", "index": 0},
                                                           type="number", style={"width": "50%"}),
 
-
-                                            ],  className="mb-3",
-
+                                            ], className="mb-3",
 
                                         ),
                                         dbc.InputGroup(
@@ -113,25 +106,25 @@ layout = html.Div(
                                                 dbc.Input(id={"type": "point-input-y", "index": 0},
                                                           type="number", style={"width": "50%"}),
 
-
-                                            ],  className="mb-3",
-
+                                            ], className="mb-3",
 
                                         ),
 
-                                    ], style={"display": "flex", "justify-content": "space-around", "margin-bottom": "10px"}),
+                                    ], style={"display": "flex", "justify-content": "space-around",
+                                              "margin-bottom": "10px"}),
 
                                 ], style={"overflow-y": "auto", "max-height": "400px"}),
                                 html.Div([
                                     html.I(className="fas fa-plus-square"),
                                     html.Span(" Add more points", style={
                                         "cursor": "pointer", "margin-left": "10px"})
-                                ], id="add-more-points", style={"display": "flex", "align-items": "center", "cursor": "pointer", "margin-top": "10px"}),
+                                ], id="add-more-points",
+                                    style={"display": "flex", "align-items": "center", "cursor": "pointer",
+                                           "margin-top": "10px"}),
                             ]),
                             dbc.ModalFooter([
                                 dbc.Button("Add", id="add-point-btn",
                                            className="ms-auto", n_clicks=0),
-
 
                             ])
                         ], id="modal", is_open=False)
@@ -201,8 +194,6 @@ layout = html.Div(
                     },
                 ),
 
-
-
                 html.Div(
                     children=[
                         dbc.Checklist(
@@ -216,7 +207,6 @@ layout = html.Div(
                             inline=True,
                             switch=True,
                         ),
-
 
                         html.Div(
                             children=[
@@ -257,7 +247,7 @@ layout = html.Div(
                                     ],
                                     className="padded-container",
                                 ),
-                            ],                     id="show_init_w_b",
+                            ], id="show_init_w_b",
                         ),
                         html.Br(),
 
@@ -302,8 +292,6 @@ layout = html.Div(
             ],
         ),
 
-
-
         html.Div(
             className="padded-container",
             children=[
@@ -320,7 +308,7 @@ layout = html.Div(
                                             "y": 0,
                                             "type": "lines",
                                             "hovertemplate": " %{y:.2f}"
-                                            "<extra></extra>",
+                                                             "<extra></extra>",
                                         },
                                     ],
                                     "layout": {
@@ -347,62 +335,65 @@ layout = html.Div(
                 dbc.Row(
                     [
                         dbc.Col(children=[
-                                dbc.Row(
-                                    id='stats-container',
-                                    children=[
-                                        html.H4("Results"),
-                                        html.Div("Equation of line", style={
-                                            "font-weight": "bold"}),
-                                        dbc.Row(
-                                            children=[
-                                                dbc.Col(
-                                                    html.Div(id="equation")),
-                                                dbc.Col(dcc.Clipboard(
-                                                        target_id="equation"), width=2, style={"color": "deepskyblue"})
-                                            ],
-                                            className="stats"
-                                        ),
-                                        html.Div("Weight", style={
-                                            "font-weight": "bold"}),
-                                        dbc.Row(
-                                            children=[
-                                                dbc.Col(
-                                                    html.Div(id="weight")),
-                                                dbc.Col(dcc.Clipboard(
-                                                        target_id="weight"), width=2, style={"color": "deepskyblue"})
-                                            ],
-                                            className="stats"
-                                        ),
-                                        html.Div("Bias", style={
-                                            "font-weight": "bold"}),
-                                        dbc.Row(
-                                            children=[
-                                                dbc.Col(
-                                                    html.Div(id="bias")),
-                                                dbc.Col(dcc.Clipboard(
-                                                        target_id="bias"), width=2, style={"color": "deepskyblue"})
-                                            ],
-                                            className="stats"
-                                        ),
-                                        html.Div("Final Cost", style={
-                                            "font-weight": "bold"}),
-                                        dbc.Row(
-                                            children=[
-                                                dbc.Col(
-                                                    html.Div(id="cost")),
-                                                dbc.Col(dcc.Clipboard(
-                                                        target_id="cost"), width=2, style={"color": "deepskyblue"})
-                                            ],
-                                            className="stats"
-                                        ),
-                                    ],
-                                    align="top",
-                                    className="flex-stats-container",
-                                )
-
-
+                            dbc.Row(
+                                id='stats-container',
+                                children=[
+                                    html.H4("Results"),
+                                    html.Div("Equation of line", style={
+                                        "font-weight": "bold"}),
+                                    dbc.Row(
+                                        children=[
+                                            dbc.Col(
+                                                html.Div(id="equation")),
+                                            dbc.Col(dcc.Clipboard(style={"fontSize": 20},
+                                                                  target_id="equation"), width=2,
+                                                    style={"color": "deepskyblue"})
+                                        ],
+                                        className="stats"
+                                    ),
+                                    html.Div("Weight", style={
+                                        "font-weight": "bold"}),
+                                    dbc.Row(
+                                        children=[
+                                            dbc.Col(
+                                                html.Div(id="weight")),
+                                            dbc.Col(dcc.Clipboard(style={"fontSize": 20},
+                                                                  target_id="weight"), width=2,
+                                                    style={"color": "deepskyblue"})
+                                        ],
+                                        className="stats"
+                                    ),
+                                    html.Div("Bias", style={
+                                        "font-weight": "bold"}),
+                                    dbc.Row(
+                                        children=[
+                                            dbc.Col(
+                                                html.Div(id="bias")),
+                                            dbc.Col(dcc.Clipboard(style={"fontSize": 20},
+                                                                  target_id="bias"), width=2,
+                                                    style={"color": "deepskyblue"})
+                                        ],
+                                        className="stats"
+                                    ),
+                                    html.Div("Final Cost", style={
+                                        "font-weight": "bold"}),
+                                    dbc.Row(
+                                        children=[
+                                            dbc.Col(
+                                                html.Div(id="cost")),
+                                            dbc.Col(dcc.Clipboard(style={"fontSize": 20},
+                                                                  target_id="cost"), width=2,
+                                                    style={"color": "deepskyblue"})
+                                        ],
+                                        className="stats"
+                                    ),
                                 ],
-                                style={"padding-top": "2rem"}),
+                                align="top",
+                                className="flex-stats-container",
+                            )
+
+                        ],
+                            style={"padding-top": "2rem"}),
                         dbc.Col(
                             children=[
                                 html.Div(
@@ -419,7 +410,7 @@ layout = html.Div(
                                                             "y": 0,
                                                             "type": "lines",
                                                             "hovertemplate": " %{y:.2f}"
-                                                            "<extra></extra>",
+                                                                             "<extra></extra>",
                                                         },
                                                     ],
                                                     "layout": {
@@ -434,7 +425,7 @@ layout = html.Div(
                                                         },
                                                     },
                                                 },
-                                            ),                             className="card",
+                                            ), className="card",
                                         ),
                                     ],
                                 ),
@@ -464,7 +455,8 @@ layout = html.Div(
      State("input-fields-container", "children")
      ],
 )
-def toggle_modal_and_add_input_fields(add_more_points_n_clicks, add_point_n_clicks, add_point_btn_n_clicks, x_axis_label, y_axis_label, children, is_open, input_fields):
+def toggle_modal_and_add_input_fields(add_more_points_n_clicks, add_point_n_clicks, add_point_btn_n_clicks,
+                                      x_axis_label, y_axis_label, children, is_open, input_fields):
     ctx = callback_context
     triggered_id, triggered_prop = ctx.triggered[0]['prop_id'].split('.')
 
@@ -478,9 +470,7 @@ def toggle_modal_and_add_input_fields(add_more_points_n_clicks, add_point_n_clic
                         dbc.Input(id={"type": "point-input-x", "index": new_index},
                                   type="number", style={"width": "50%"}),
 
-
-                    ],  className="mb-3",
-
+                    ], className="mb-3",
 
                 ),
                 dbc.InputGroup(
@@ -489,9 +479,7 @@ def toggle_modal_and_add_input_fields(add_more_points_n_clicks, add_point_n_clic
                         dbc.Input(id={"type": "point-input-y", "index": new_index},
                                   type="number", style={"width": "50%"}),
 
-
-                    ],  className="mb-3",
-
+                    ], className="mb-3",
 
                 ),
 
@@ -510,7 +498,7 @@ def toggle_modal_and_add_input_fields(add_more_points_n_clicks, add_point_n_clic
         raise exceptions.PreventUpdate
 
 
-@ callback(
+@callback(
     [Output("show_label_inputs", "className"),
      Output("x-axis-label", "value"),
      Output("y-axis-label", "value")],
@@ -527,7 +515,7 @@ def show_label_name_inputs(toggle_value, x_axis_label, y_axis_label):
         return "hidden", "X", "Y"
 
 
-@ callback(
+@callback(
     [Output("show_init_w_b", "className"),
      Output("init_w", "value"),
      Output("init_b", "value")],
@@ -559,12 +547,11 @@ def parse_contents(contents, filename, date):
         return None
 
 
-@ callback(Output('file-status-info', 'children'),
-           Input('upload-data-component', 'contents'),
-           State('upload-data-component', 'filename'),
-           State('upload-data-component', 'last_modified'))
+@callback(Output('file-status-info', 'children'),
+          Input('upload-data-component', 'contents'),
+          State('upload-data-component', 'filename'),
+          State('upload-data-component', 'last_modified'))
 def update_output(list_of_contents, list_of_names, list_of_dates):
-
     if list_of_contents is not None:
         dataframes = [
             parse_contents(list_of_contents, list_of_names, list_of_dates)]
@@ -574,7 +561,9 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         df = dataframes[0]
 
         if df.shape[1] != 2:
-            return html.Div("Invalid file format for 2D regression. Please upload a valid .csv or .xslx file (see sample.csv)", style={'color': 'red'})
+            return html.Div(
+                "Invalid file format for 2D regression. Please upload a valid .csv or .xslx file (see sample.csv)",
+                style={'color': 'red'})
         else:
             return html.Div(children=[
                 html.Div("File uploaded successfully",
@@ -585,7 +574,7 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         return html.Div("No data", style={'color': 'grey'})
 
 
-@ callback(
+@callback(
     [Output("regression-graph", "figure"),
      Output("cost-graph", "figure"),
      Output('cost', 'children'),
@@ -605,8 +594,8 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
     Input("init_b", "value"),
     Input("add-point-btn", "n_clicks"),
     State("input-fields-container", "children"))
-def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y_axis_label, learning_rate, iteration_amount, init_w, init_b, submit_points, input_fields_children):
-
+def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y_axis_label, learning_rate,
+                 iteration_amount, init_w, init_b, submit_points, input_fields_children):
     regression_fig = go.Figure()
     cost_fig = go.Figure()
 
@@ -620,7 +609,7 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
                 "yref": "paper",
                 "showarrow": False,
                 "font": {
-                        "size": 14
+                    "size": 14
                 }
             }
         ]
@@ -636,7 +625,7 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
                 "yref": "paper",
                 "showarrow": False,
                 "font": {
-                        "size": 14
+                    "size": 14
                 }
             }
         ]
@@ -702,7 +691,8 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
         regression_fig = go.Figure()
         # trace for points
         regression_fig.add_trace(go.Scatter(
-            x=df[x_axis_label], y=df[y_axis_label], mode='markers',  name="data",   hovertemplate="X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>"))
+            x=df[x_axis_label], y=df[y_axis_label], mode='markers', name="data",
+            hovertemplate="X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>"))
 
         # trace for regression line at any point on the line
         start = min(df[x_axis_label])
@@ -745,7 +735,7 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis_label, y
         )
 
         cost_fig.add_trace(go.Scatter(
-            x=list(range(1, iteration_amount+1)), y=cost, mode='lines', name='Cost'))
+            x=list(range(1, iteration_amount + 1)), y=cost, mode='lines', name='Cost'))
 
         w_rounded = round(w, 3)
         b_rounded = round(b, 3)

@@ -1,18 +1,16 @@
-from dash import html, dcc, callback, Input, Output, State, exceptions, register_page
-import pandas as pd
 import dash_bootstrap_components as dbc
-from linear_regression import gradient_descent, mean_squared_error, calc_correlation_p_value, gradient_descent_returns_weights_and_biases
-import plotly.graph_objects as go
 import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+from dash import html, dcc, callback, Input, Output, State
 
+from linear_regression import gradient_descent_returns_weights_and_biases
 
 datasetList = [
+    {"label": "Fish Market Data", "value": "fish.csv"},
     {"label": "Car Price Data", "value": "car_price.csv"},
     {"label": "NYSE Stock Fundamentals Data", "value": "fundamentals.csv"},
-    {"label": "CDC Nutrition, Physical Activity, and Obesity Data",
-        "value": "cdc_health_data.csv"},
-    {"label": "Fish Market Data", "value": "fish.csv"},
-
+    {"label": "Housing Data", "value": "housing.csv"},
 ]
 
 layout = html.Div(
@@ -87,7 +85,6 @@ layout = html.Div(
                             switch=True,
                         ),
 
-
                         html.Div(
                             children=[
                                 dbc.Row(style={"margin-bottom": ".5rem"}, children=[
@@ -124,9 +121,9 @@ layout = html.Div(
                                         width=6,
                                     ),
                                 ],
-                                    className="padded-container",
-                                ),
-                            ],                     id="show_init_w_b_sg",
+                                        className="padded-container",
+                                        ),
+                            ], id="show_init_w_b_sg",
                         ),
                         html.Br(),
 
@@ -160,7 +157,7 @@ layout = html.Div(
                                     type="number",
                                     value=100,
                                     min=1,
-                                    max=500,
+                                    max=1000,
                                 ),
                             ],
                             className="mb-3",
@@ -187,7 +184,7 @@ layout = html.Div(
                                             "y": 0,
                                             "type": "lines",
                                             "hovertemplate": " %{y:.2f}"
-                                            "<extra></extra>",
+                                                             "<extra></extra>",
                                         },
                                     ],
                                     "layout": {
@@ -220,43 +217,47 @@ layout = html.Div(
                                 children=[
                                     html.H4("Results"),
                                     html.Div("Equation of line", style={
-                                             "font-weight": "bold"}),
+                                        "font-weight": "bold"}),
                                     dbc.Row(
                                         children=[
                                             dbc.Col(
                                                 html.Div(id="equation_sg")),
-                                            dbc.Col(dcc.Clipboard(
-                                                target_id="equation_sg"), width=2, style={"color": "deepskyblue"})
+                                            dbc.Col(dcc.Clipboard(style={"fontSize": 20},
+                                                                  target_id="equation_sg"), width=2,
+                                                    style={"color": "deepskyblue"})
                                         ],
                                         className="stats"
                                     ),
                                     html.Div("Weight", style={
-                                             "font-weight": "bold"}),
+                                        "font-weight": "bold"}),
                                     dbc.Row(
                                         children=[
                                             dbc.Col(html.Div(id="weight_sg")),
-                                            dbc.Col(dcc.Clipboard(
-                                                target_id="weight_sg"), width=2, style={"color": "deepskyblue"})
+                                            dbc.Col(dcc.Clipboard(style={"fontSize": 20},
+                                                                  target_id="weight_sg"), width=2,
+                                                    style={"color": "deepskyblue"})
                                         ],
                                         className="stats"
                                     ),
                                     html.Div("Bias", style={
-                                             "font-weight": "bold"}),
+                                        "font-weight": "bold"}),
                                     dbc.Row(
                                         children=[
                                             dbc.Col(html.Div(id="bias_sg")),
-                                            dbc.Col(dcc.Clipboard(
-                                                target_id="bias_sg"), width=2, style={"color": "deepskyblue"})
+                                            dbc.Col(dcc.Clipboard(style={"fontSize": 20},
+                                                                  target_id="bias_sg"), width=2,
+                                                    style={"color": "deepskyblue"})
                                         ],
                                         className="stats"
                                     ),
                                     html.Div("Final Cost", style={
-                                             "font-weight": "bold"}),
+                                        "font-weight": "bold"}),
                                     dbc.Row(
                                         children=[
                                             dbc.Col(html.Div(id="cost_sg")),
-                                            dbc.Col(dcc.Clipboard(
-                                                target_id="cost_sg"), width=2, style={"color": "deepskyblue"})
+                                            dbc.Col(dcc.Clipboard(style={"fontSize": 20},
+                                                                  target_id="cost_sg"), width=2,
+                                                    style={"color": "deepskyblue"})
                                         ],
                                         className="stats"
                                     ),
@@ -283,7 +284,7 @@ layout = html.Div(
                                                             "y": 0,
                                                             "type": "lines",
                                                             "hovertemplate": " %{y:.2f}"
-                                                            "<extra></extra>",
+                                                                             "<extra></extra>",
                                                         },
                                                     ],
                                                     "layout": {
@@ -298,7 +299,7 @@ layout = html.Div(
                                                         },
                                                     },
                                                 },
-                                            ),                             className="card",
+                                            ), className="card",
                                         ),
                                     ],
                                 ),
@@ -316,17 +317,10 @@ layout = html.Div(
     [Output("show_label_inputs_sg", "className"),
      ],
     [Input("toggle_header_provided_sg", "value"),
-     Input("x-var-dropdown-choice", "value"),
-     Input("y-var-dropdown-choice", "value")
      ],
 )
-def show_label_name_inputs(toggle_value, x_axis_label, y_axis_label):
-    x_var = x_axis_label.replace("_", " ").title()
-    y_var = y_axis_label.replace("_", " ").title()
-    if toggle_value:
-        return "padded-container"
-    else:
-        return "hidden"
+def show_label_name_inputs(toggle_value):
+    return "padded-container" if toggle_value else "hidden"
 
 
 @callback(
@@ -338,9 +332,6 @@ def show_label_name_inputs(toggle_value, x_axis_label, y_axis_label):
      State("init_b_sg", "value")]
 )
 def show_init_w_b_sg(toggle_value, init_w_sg, init_b_sg):
-    # if toggle_value is None or init_b_sg is None or init_w_sg is None:
-    #     raise exceptions.PreventUpdate
-    # print(toggle_value, init_w_sg, init_b_sg)
     if toggle_value:
         return "padded-container", init_w_sg, init_b_sg
     else:
@@ -355,7 +346,7 @@ def set_output_options(filename):
     df = pd.read_csv("datasets/" + filename)
     options = []
     for col in df.columns:
-        if df[col].dtype == "int64" or df[col].dtype == "float64":
+        if df[col].dtype in ["int64", "float64"]:
             colOriginal = col
             col = col.replace("_", " ").title()
             options.append({"label": col, "value": colOriginal})
@@ -370,7 +361,7 @@ def set_output_options(input_value):
     df = pd.read_csv("datasets/" + input_value)
     options = []
     for col in df.columns:
-        if df[col].dtype == "int64" or df[col].dtype == "float64":
+        if df[col].dtype in ["int64", "float64"]:
             colOriginal = col
             col = col.replace("_", " ").title()
             options.append({"label": col, "value": colOriginal})
@@ -383,10 +374,7 @@ def set_output_options(input_value):
     [Input("x-var-dropdown-choice", "options")],
 )
 def set_output_value(available_options):
-    if available_options:
-        return available_options[0]["value"]
-    else:
-        return None
+    return available_options[0]["value"] if available_options else None
 
 
 @callback(
@@ -394,10 +382,7 @@ def set_output_value(available_options):
     [Input("y-var-dropdown-choice", "options")],
 )
 def set_output_value(available_options):
-    if available_options:
-        return available_options[1]["value"]
-    else:
-        return None
+    return available_options[1]["value"] if available_options else None
 
 
 @callback(
@@ -423,7 +408,7 @@ def set_output_value(available_options):
     ],
 )
 def create_graphs(
-    input_value, x_var, y_var, iteration_amount_sg, learning_rate_sg, init_w_sg, init_b_sg
+        input_value, x_var, y_var, iteration_amount_sg, learning_rate_sg, init_w_sg, init_b_sg
 ):
     df = pd.read_csv("datasets/" + input_value)
     x_column = df[x_var]
@@ -440,10 +425,12 @@ def create_graphs(
     try:
         init_b_sg = float(init_b_sg) if init_b_sg else float(0)
         init_w_sg = float(init_w_sg) if init_w_sg else float(0)
-        learning_rate_sg = float(
-            learning_rate_sg) if learning_rate_sg else float(0.001)
-        iteration_amount_sg = int(
-            iteration_amount_sg) if iteration_amount_sg else int(100)
+        learning_rate_sg = (
+            float(learning_rate_sg) if learning_rate_sg else 0.001
+        )
+        iteration_amount_sg = (
+            int(iteration_amount_sg) if iteration_amount_sg else 100
+        )
     except Exception as e:
         print(e)
 
@@ -453,7 +440,7 @@ def create_graphs(
     regression_fig = go.Figure()
     # trace for points
     regression_fig.add_trace(go.Scatter(
-        x=x_column, y=y_column, mode='markers',  name="data",   hovertemplate="X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>"))
+        x=x_column, y=y_column, mode='markers', name="data", hovertemplate="X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>"))
 
     # trace for regression line at any point on the line
     start = min(x_column)
@@ -496,7 +483,7 @@ def create_graphs(
     )
 
     cost_fig.add_trace(go.Scatter(
-        x=list(range(1, iteration_amount_sg+1)), y=cost, mode='lines', name='Cost'))
+        x=list(range(1, iteration_amount_sg + 1)), y=cost, mode='lines', name='Cost'))
 
     w_rounded = round(w, 3)
     b_rounded = round(b, 3)
